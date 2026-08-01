@@ -69,8 +69,7 @@ export default function InteractiveMap() {
         .enter()
         .append("path")
         .attr("class", "country")
-        .attr("d", pathGenerator)
-        // إعطاء ألوان صريحة للـ SVG لتفادي الأسود الافتراضي
+        .attr("d", (d: any) => pathGenerator(d))
         .style("fill", "#cbd5e1")
         .style("stroke", "#ffffff")
         .style("stroke-width", "1.5px")
