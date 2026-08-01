@@ -1,7 +1,7 @@
 'use client';
 
-import { useToast } from "/components/ui/PopUp/ToastContext";
-import { useConfirm } from "/components/ui/PopUp/ConfirmContext";
+import { useToast } from "@/components/ui/PopUp/ToastContext";
+import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
 import { useState, useEffect } from 'react';
 import { useTheme } from "next-themes";
 
