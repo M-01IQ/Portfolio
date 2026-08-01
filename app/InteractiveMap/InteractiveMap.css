@@ -1,0 +1,105 @@
+/* إلغاء التنسيق العام لـ body واستبداله بكونتينر مغلق */
+.interactiveMapWrapper {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    /* استبدال الصورة بلون خلفية ثابت (رمادي فاتح هادئ) */
+    background-color: #f5f7fa;
+    width: 100%;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+
+.mapHeader {
+    margin: 10px 0;
+    font-size: 1.5em;
+    text-align: center;
+    color: #333;
+}
+
+.mainContent {
+    display: grid;
+    grid-template-columns: 2fr 350px;
+    grid-template-areas: "map sidebar";
+    gap: 10px;
+    padding: 10px;
+}
+
+.mapContainer {
+    grid-area: map;
+    position: sticky;
+    top: 10px;
+    align-self: start;
+    text-align: center;
+    overflow: hidden;
+    height: 600px;
+}
+
+/* تخصيص الـ svg فقط داخل هذا المكون */
+.mapContainer svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.country {
+    fill: #4c8c4a;
+    stroke: #333;
+    stroke-width: 0.8px;
+    transition: fill 0.2s ease, stroke-width 0.2s ease;
+    cursor: pointer;
+}
+
+.country:hover {
+    fill: #ff9800;
+    stroke-width: 3px;
+    stroke: #c27a00;
+}
+
+.tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 1000;
+    font-size: 0.9em;
+    transform: translate(-50%, -100%);
+}
+
+.sidebar {
+    grid-area: sidebar;
+    padding: 20px 15px;
+    background-color: rgba(255, 255, 255, 0.85);
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    border-radius: 8px;
+}
+
+.sidebar h2 {
+    margin-top: 0;
+    border-bottom: 2px solid #4c8c4a;
+    padding-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.sidebar video {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+    .mainContent {
+        grid-template-columns: 1fr;
+        grid-template-areas: "map" "sidebar";
+    }
+    .mapContainer {
+        position: static;
+        height: 400px;
+    }
+}
