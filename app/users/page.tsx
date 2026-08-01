@@ -1,8 +1,8 @@
 "use client"
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/config/createClient'
-import { useToast } from "/components/ui/PopUp/ToastContext";
-import { useConfirm } from "/components/ui/PopUp/ConfirmContext";
+import { useToast } from "@/components/ui/PopUp/ToastContext";
+import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
 
 export default function UserSupa() {
   const supabase = useMemo(() => createClient(), [])
