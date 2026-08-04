@@ -1,26 +1,73 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { createClient } from "@/config/createClient";
+import { User } from "@supabase/supabase-js";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  const supabase = createClient();
+
   useEffect(() => {
     setMounted(true);
+
+    // 🔍 جلب بيانات المستخدم الحالية ومراقبة تغير حالة التسجيل
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoadingUser(false);
+    };
+
+    fetchUser();
+
+    // الاستماع للتغييرات (تسجيل الدخول أو الخروج من أي مكان في التطبيق)
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  const navLinks = [
+  // 🚪 دالة تسجيل الخروج
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setIsOpen(false);
+    router.push('/auth/login');
+    router.refresh();
+  };
+
+  // 🔗 الروابط الأساسية (بدون روابط الحساب)
+  const baseNavLinks = [
     { name: "Home", href: "/" },
+    { name: "dashboard", href: "/dashboard" },
     { name: "InteractiveMap", href: "/InteractiveMap" },
     { name: "Users", href: "/users" },
     { name: "Notification", href: "/notification" },
     { name: "Setting", href: "/setting" },
+  ];
+
+  // فلترة أو إضافة الروابط بناءً على حالة تسجيل الدخول
+  const navLinks = [
+    ...baseNavLinks,
+    ...(!user
+      ? [
+          { name: "register", href: "/auth/register" },
+          { name: "login", href: "/auth/login" },
+        ]
+      : []),
   ];
 
   return (
@@ -59,7 +106,7 @@ export default function Navbar() {
               })}
             </div>
 
-            {/* Desktop Action & Theme Switcher */}
+            {/* Desktop Action & Theme Switcher & Logout Button */}
             <div className="hidden md:flex items-center gap-3">
               {mounted ? (
                 <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm">
@@ -77,9 +124,21 @@ export default function Navbar() {
                 <div className="w-8 h-8" />
               )}
 
-              <Link href="/" className="btn btn-primary btn-sm rounded-lg shadow-sm">
-                Get Started
-              </Link>
+              {/* 🔴 زر تسجيل الخروج / أو الزر الإفتراضي */}
+              {!loadingUser && (
+                user ? (
+                  <button 
+                    onClick={handleSignOut} 
+                    className="btn btn-error btn-outline btn-sm rounded-lg"
+                  >
+                    تسجيل الخروج
+                  </button>
+                ) : (
+                  <Link href="/auth/login" className="btn btn-primary btn-sm rounded-lg shadow-sm">
+                    Get Started
+                  </Link>
+                )
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -168,14 +227,26 @@ export default function Navbar() {
             </div>
           </div>
 
+          {/* 🔴 أسفل قائمة الموبايل: زر تسجيل الخروج أو Get Started */}
           <div className="p-4 border-t border-base-200">
-            <Link 
-              href="/" 
-              onClick={() => setIsOpen(false)}
-              className="btn btn-primary w-full rounded-lg shadow-sm"
-            >
-              Get Started
-            </Link>
+            {!loadingUser && (
+              user ? (
+                <button 
+                  onClick={handleSignOut}
+                  className="btn btn-error btn-outline w-full rounded-lg"
+                >
+                  تسجيل الخروج
+                </button>
+              ) : (
+                <Link 
+                  href="/auth/login" 
+                  onClick={() => setIsOpen(false)}
+                  className="btn btn-primary w-full rounded-lg shadow-sm"
+                >
+                  Get Started
+                </Link>
+              )
+            )}
           </div>
         </div>
       </nav>
