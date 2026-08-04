@@ -1,7 +1,5 @@
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
-import "./globals.css";
-import Navbar from "@/components/shared/Navbar";
-import Footer from "@/components/shared/Footer";
+import "./(main)/globals.css";
 import { ToastProvider } from "@/components/ui/PopUp/ToastContext";
 import { ConfirmProvider } from "@/components/ui/PopUp/ConfirmContext";
 
@@ -16,9 +14,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <ConfirmProvider>
-              <Navbar />
               {children}
-              <Footer />
             </ConfirmProvider>
           </ToastProvider>
         </ThemeProvider>

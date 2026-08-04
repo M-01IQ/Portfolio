@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
   const pathname = url.pathname;
 
   // 4. تحديد المسارات بالشكل الصحيح 🟢
-  const authRoutes = ['/auth/login', '/auth/register'];
+  const authRoutes = ['/app/auth/login', '/app/auth/register'];
   
   // المسارات المحمية فقط (تأكد أن كل مسار يبدأ بـ / ولا تحتوي على عناصر فارغة)
   const protectedRoutes = [
@@ -71,7 +71,7 @@ export async function proxy(request: NextRequest) {
 
   // 🔴 غير مسجل وحاول دخول صفحة محمية -> توجيه للدخول
   if (isProtectedRoute && !user) {
-    url.pathname = '/auth/login';
+    url.pathname = '/app/auth/login';
     return NextResponse.redirect(url);
   }
 
