@@ -43,7 +43,6 @@ export default function Login() {
         onSubmit={handleLogin} 
         className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md space-y-4 relative"
       >
-        {/* 🔹 زر العودة كـ Link إلى /auth/welcome */}
         <div className="flex items-center justify-between pb-2 border-b border-gray-100">
           <Link
             href="/auth/welcome"
