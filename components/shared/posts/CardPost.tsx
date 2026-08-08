@@ -115,7 +115,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
 };
 
 
-  // ✏️ دالة التعديل والحفظ
+  //  دالة التعديل والحفظ
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -126,7 +126,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
     if (selectedFile) {
       const uploadedUrl = await uploadImage(selectedFile);
       if (uploadedUrl) {
-        // حذف الصورة القديمة من الـ Storage لتوفير المساحة
+        // حذف الصورة القديمة
         if (item.img_url) {
           await deleteImageFromStorage(item.img_url);
         }
@@ -251,11 +251,12 @@ const uploadImage = async (file: File): Promise<string | null> => {
         )}
       </div>
 
-      <div className="px-4 py-3">
-        <h2 className="text-base font-bold text-base-content leading-relaxed">
+      <div className="py-3">
+        <div className="w-full px-4">
+          <h2 className="text-base font-bold text-base-content leading-relaxed">
           {item.title}
-        </h2>
-
+          </h2>
+        </div>
         {item.img_url && (
           <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
             <img
@@ -267,7 +268,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
         )}
 
         {item.text && (
-          <div className="mt-3 pt-3 border-t border-base-200/60">
+          <div className="mt-3 pt-3 px-4 border-t border-base-200/60">
             <p className="text-sm text-base-content/80">{item.text}</p>
           </div>
         )}

@@ -5,7 +5,7 @@ import { createClient } from "@/config/createClient";
 import { useToast } from "@/components/ui/PopUp/ToastContext";
 import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
 
-// 📝 الانترفيس النظيف والمطلوب
+// الأنترفيس  
 export interface EmbedItem {
   id: string | number;
   title: string;
@@ -14,26 +14,44 @@ export interface EmbedItem {
 
 const supabase = createClient();
 
-// 💡 دالة تجهيز رابط الـ IFRAME لليوتيوب والمواقع الأخرى
-const formatIframeUrl = (url: string): string => {
-  if (!url) return "";
-  
-  // تحويل رابط يوتيوب إلى Embed تلقائياً
-  if (url.includes("youtube.com/watch")) {
-    const videoId = new URLSearchParams(url.split("?")[1]).get("v");
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-  }
-  if (url.includes("youtu.be/")) {
-    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+// دالة محسّنة لمعالجة كافة أنواع روابط يوتيوب
+const formatIframeUrl = (urlStr: string): string => {
+  if (!urlStr) return "";
+
+  try {
+    const url = new URL(urlStr);
+
+    // 1. رابط عادي: youtube.com/watch?v=VIDEO_ID
+    if (url.hostname.includes("youtube.com")) {
+      if (url.pathname === "/watch") {
+        const videoId = url.searchParams.get("v");
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : urlStr;
+      }
+      // 2. رابط قصيرة: youtube.com/shorts/VIDEO_ID
+      if (url.pathname.startsWith("/shorts/")) {
+        const videoId = url.pathname.split("/")[2];
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : urlStr;
+      }
+      // إذا كان رابط embed أساساً
+      if (url.pathname.startsWith("/embed/")) {
+        return urlStr;
+      }
+    }
+
+    // 3. رابط مختصر: youtu.be/VIDEO_ID
+    if (url.hostname.includes("youtu.be")) {
+      const videoId = url.pathname.slice(1);
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : urlStr;
+    }
+  } catch (error) {
+    // في حال عدم صلاحية الـ URL المنشأ يتم إرجاع النص الأصلي
+    return urlStr;
   }
 
-  return url;
+  return urlStr;
 };
 
-// ==========================================
-// 1️⃣ مكون إضافة رابط/فيديو جديد
-// ==========================================
+// مكون إضافة رابط فيديو جديد
 export function CreateEmbedForm({
   onAddSuccess,
 }: {
@@ -43,6 +61,7 @@ export function CreateEmbedForm({
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,13 +72,12 @@ export function CreateEmbedForm({
     }
 
     setLoading(true);
+    const formattedUrl = formatIframeUrl(url.trim());
 
-    const formattedUrl = formatIframeUrl(url);
-
-    // الحفظ في جدول embeds المستقل
+    // الحفظ في جدول embeds 
     const { data, error } = await supabase
       .from("embeds")
-      .insert([{ title, url: formattedUrl }])
+      .insert([{ title: title.trim(), url: formattedUrl }])
       .select();
 
     setLoading(false);
@@ -71,53 +89,65 @@ export function CreateEmbedForm({
       if (onAddSuccess) onAddSuccess(data[0]);
       setTitle("");
       setUrl("");
+      setIsFormOpen(false); // إغلاق النموذج بعد الإضافة بنجاح
     }
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto p-6 bg-base-100 shadow-xl rounded-3xl border border-base-200 text-right mb-8" dir="rtl">
-      <h2 className="text-xl font-bold mb-6 text-center text-primary">إضافة رابط أو فيديو جديد</h2>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text font-semibold">العنوان</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered input-sm sm:input-md w-full"
-            placeholder="مثال: شرح درس التفاعلات / موقع الجامعة"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text font-semibold">الرابط (URL)</span>
-          </label>
-          <input
-            type="url"
-            className="input input-bordered input-sm sm:input-md w-full"
-            placeholder="https://example.com أو رابط يوتيوب"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" disabled={loading} className="btn btn-primary btn-sm sm:btn-md mt-2 w-full">
-          {loading ? <span className="loading loading-spinner"></span> : "إضافة الرابط"}
+    <>
+      <div className="flex justify-center mb-4">
+        <button
+          className={`btn ${isFormOpen ? "btn-error" : "btn-primary"} btn-circle text-xl shadow-md`}
+          onClick={() => setIsFormOpen((prev) => !prev)}
+          title={isFormOpen ? "إغلاق النموذج" : "إضافة عنصر جديد"}
+        >
+          {isFormOpen ? "✕" : "+"}
         </button>
-      </form>
-    </div>
+      </div>
+
+      {isFormOpen && (
+        <div className="w-full max-w-xl mx-auto p-6 bg-base-100 shadow-xl rounded-3xl border border-base-200 text-right mb-8" dir="rtl">
+          <h2 className="text-xl font-bold mb-6 text-center text-primary">إضافة رابط أو فيديو جديد</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-semibold">العنوان</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered input-sm sm:input-md w-full"
+                placeholder="مثال: شرح درس التفاعلات / موقع الجامعة"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-semibold">الرابط (URL)</span>
+              </label>
+              <input
+                type="url"
+                className="input input-bordered input-sm sm:input-md w-full"
+                placeholder="https://example.com أو رابط يوتيوب"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" disabled={loading} className="btn btn-primary btn-sm sm:btn-md mt-2 w-full">
+              {loading ? <span className="loading loading-spinner"></span> : "إضافة الرابط"}
+            </button>
+          </form>
+        </div>
+      )}
+    </>
   );
 }
 
-// ==========================================
-// 2️⃣ مكون عرض بطاقة الـ IFRAME وتعديلها وحذفها
-// ==========================================
+// عرض بطاقة الـ IFRAME
 export function CardEmbed({
   item,
   onDelete,
@@ -135,11 +165,11 @@ export function CardEmbed({
   const [url, setUrl] = useState(item.url || "");
   const [loading, setLoading] = useState(false);
 
-  // 🗑️ الحذف المباشر من جدول embeds
+  // الحذف المباشر من جدول embeds
   const handleDelete = (id: string | number) => {
     askConfirm(
       "تأكيد الحذف",
-      "هل أنت متاكد من إزالة هذا التضمين؟",
+      "هل أنت تأكد من إزالة هذا التضمين؟",
       async () => {
         try {
           const { error } = await supabase.from("embeds").delete().eq("id", id);
@@ -158,16 +188,16 @@ export function CardEmbed({
     );
   };
 
-  // ✏️ التعديل والتحديث
+  // التعديل والتحديث
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const formattedUrl = formatIframeUrl(url);
+    const formattedUrl = formatIframeUrl(url.trim());
 
     const { data, error } = await supabase
       .from("embeds")
-      .update({ title, url: formattedUrl })
+      .update({ title: title.trim(), url: formattedUrl })
       .eq("id", item.id)
       .select();
 
@@ -224,7 +254,8 @@ export function CardEmbed({
   }
 
   return (
-    <div className="card w-full max-w-xl mx-auto bg-base-100 border border-base-300 shadow-md rounded-3xl overflow-hidden mb-6 text-right transition-all duration-300 hover:shadow-lg mt-2" dir="rtl">
+    <div className="card w-full max-w-xl mx-auto bg-base-100 border border-base-300 shadow-md rounded-3xl overflow-hidden text-right transition-all duration-300 hover:shadow-lg my-2" dir="rtl">
+      
       <div className="p-4 pb-2 flex justify-between items-center">
         <h2 className="text-base font-bold text-base-content leading-relaxed">{item.title}</h2>
         <span className="badge badge-ghost badge-sm font-mono text-xs opacity-80">#{item.id}</span>
@@ -233,9 +264,10 @@ export function CardEmbed({
       <div className="px-4 py-2">
         {item.url ? (
           <iframe
-            className="w-full h-64 bg-base-100 rounded-2xl border border-base-300 shadow-sm hover:shadow-md transition-shadow p-2 flex flex-col items-center text-center"
+            className="w-full h-64 bg-base-100 rounded-2xl border border-base-300 shadow-sm transition-shadow"
             src={item.url}
-            frameBorder="0"
+            title={item.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           ></iframe>
         ) : (
@@ -272,15 +304,13 @@ export function CardEmbed({
   );
 }
 
-// ==========================================
-// 3️⃣ المدير الرئيسي للجلب والعرض (Page/Container)
-// ==========================================
+// جلب وعرض (Page/Container)
 export default function EmbedManager() {
   const [embeds, setEmbeds] = useState<EmbedItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { showToast } = useToast();
 
-  // 🔄 جلب كل العناصر من جدول embeds مباشرة
+  // جلب العناصر من جدول embeds
   useEffect(() => {
     const fetchEmbeds = async () => {
       setLoading(true);
@@ -298,12 +328,11 @@ export default function EmbedManager() {
     };
 
     fetchEmbeds();
-  }, []);
+  }, [showToast]);
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto my-3 px-2">
       <CreateEmbedForm onAddSuccess={(newItem) => setEmbeds((prev) => [newItem, ...prev])} />
-
       <div className="flex flex-col items-center w-full">
         {loading ? (
           <div className="flex justify-center items-center py-12">

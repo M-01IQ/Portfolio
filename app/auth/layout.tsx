@@ -5,7 +5,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      {/* هنا لا توجد Navbar ولا Footer */}
+      
       {children}
     </div>
   );

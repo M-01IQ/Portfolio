@@ -45,12 +45,12 @@ export default function Navbar() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsOpen(false);
-    router.push('/auth/login');
+    router.push('/auth/welcome');
     router.refresh();
   };
 
-  // 🔗 الروابط الأساسية (بدون روابط الحساب)
-  const baseNavLinks = [
+  // 🔗 الروابط الأساسية
+  const navLinks = [
     { name: "Home", href: "/" },
     { name: "dashboard", href: "/dashboard" },
     { name: "InteractiveMap", href: "/InteractiveMap" },
@@ -59,16 +59,8 @@ export default function Navbar() {
     { name: "Setting", href: "/setting" },
   ];
 
-  // فلترة أو إضافة الروابط بناءً على حالة تسجيل الدخول
-  const navLinks = [
-    ...baseNavLinks,
-    ...(!user
-      ? [
-          { name: "register", href: "/auth/register" },
-          { name: "login", href: "/auth/login" },
-        ]
-      : []),
-  ];
+  // 💡 التحقق مما إذا كان المستخدم مسجلاً بحساب حقيقي وليس ضيفاً
+  const isRegisteredUser = user && !user.is_anonymous;
 
   return (
     <>
@@ -106,7 +98,7 @@ export default function Navbar() {
               })}
             </div>
 
-            {/* Desktop Action & Theme Switcher & Logout Button */}
+            {/* Desktop Action & Theme Switcher */}
             <div className="hidden md:flex items-center gap-3">
               {mounted ? (
                 <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm">
@@ -124,18 +116,21 @@ export default function Navbar() {
                 <div className="w-8 h-8" />
               )}
 
-              {/* 🔴 زر تسجيل الخروج / أو الزر الإفتراضي */}
+              {/* 🔴 شرط العرض: تسجيل الخروج للمسجلين، وتسجيل الدخول للضيوف وغير المسجلين */}
               {!loadingUser && (
-                user ? (
+                isRegisteredUser ? (
                   <button 
                     onClick={handleSignOut} 
-                    className="btn btn-error btn-outline btn-sm rounded-lg"
+                    className="btn btn-error btn-outline btn-sm rounded-lg cursor-pointer"
                   >
                     تسجيل الخروج
                   </button>
                 ) : (
-                  <Link href="/auth/login" className="btn btn-primary btn-sm rounded-lg shadow-sm">
-                    Get Started
+                  <Link 
+                    href="/auth/welcome" 
+                    className="btn btn-primary btn-sm rounded-lg shadow-sm"
+                  >
+                    تسجيل الدخول
                   </Link>
                 )
               )}
@@ -227,23 +222,23 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* 🔴 أسفل قائمة الموبايل: زر تسجيل الخروج أو Get Started */}
+          {/* 🔴 أسفل قائمة الموبايل */}
           <div className="p-4 border-t border-base-200">
             {!loadingUser && (
-              user ? (
+              isRegisteredUser ? (
                 <button 
                   onClick={handleSignOut}
-                  className="btn btn-error btn-outline w-full rounded-lg"
+                  className="btn btn-error btn-outline w-full rounded-lg cursor-pointer"
                 >
                   تسجيل الخروج
                 </button>
               ) : (
                 <Link 
-                  href="/auth/login" 
+                  href="/auth/welcome" 
                   onClick={() => setIsOpen(false)}
                   className="btn btn-primary w-full rounded-lg shadow-sm"
                 >
-                  Get Started
+                  تسجيل الدخول
                 </Link>
               )
             )}

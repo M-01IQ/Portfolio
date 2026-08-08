@@ -51,7 +51,7 @@ export default function Posts() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto" dir="rtl">
+    <div className=" max-w-7xl mx-auto" dir="rtl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">العناصر</h1>
         <button

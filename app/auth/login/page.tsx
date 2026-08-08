@@ -14,11 +14,9 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-
-  // ✅ 1. استدعاء العميل داخل المكون
   const supabase = createClient();
 
-    const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -29,9 +27,7 @@ export default function Login() {
     });
 
     if (error) {
-      // 🔍 اطبّع الخطأ الكامل في الـ Console لمعرفة التفاصيل
-      showToast(" فشل تسجيل الدخول !", "error");
-      console.error("Supabase Login Error:", error);
+      showToast("فشل تسجيل الدخول!", "error");
       setError(error.message);
       setLoading(false);
     } else {
@@ -45,9 +41,33 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4" dir="rtl">
       <form 
         onSubmit={handleLogin} 
-        className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md space-y-4"
+        className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md space-y-4 relative"
       >
-        <h1 className="text-xl font-bold text-center text-gray-800">تسجيل الدخول</h1>
+        {/* 🔹 زر العودة كـ Link إلى /auth/welcome */}
+        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+          <Link
+            href="/auth/welcome"
+            className="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1 text-sm"
+            title="العودة للصفحة الرئيسية للمصادقة"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              strokeWidth={2} 
+              stroke="currentColor" 
+              className="w-5 h-5 transform rotate-180"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            <span>رجوع</span>
+          </Link>
+
+          <h1 className="text-xl font-bold text-gray-800">تسجيل الدخول</h1>
+          
+          {/* عنصر موازنة لموازنة العنوان في المنتصف */}
+          <div className="w-12"></div>
+        </div>
 
         {error && (
           <div className="p-2 bg-red-50 text-red-600 text-sm rounded border border-red-200 text-center">
@@ -62,7 +82,7 @@ export default function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
+            className="w-full text-gray-800 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
             dir="ltr"
           />
         </div>
@@ -74,7 +94,7 @@ export default function Login() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
+            className="w-full p-2 text-gray-600 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
             dir="ltr"
           />
         </div>
@@ -86,6 +106,7 @@ export default function Login() {
         >
           {loading ? 'جاري الدخول...' : 'دخول'}
         </button>
+
         <div className="text-center text-sm text-gray-600 pt-2 border-t">
           ليس لديك حساب؟{' '}
           <Link href="/auth/register" className="text-blue-600 hover:underline font-medium">
