@@ -71,7 +71,7 @@ export async function proxy(request: NextRequest) {
 
   // 🔴 غير مسجل وحاول دخول صفحة محمية -> توجيه للدخول
   if (isProtectedRoute && !user) {
-    url.pathname = '/app/auth/login';
+    url.pathname = '/auth/welcome';
     return NextResponse.redirect(url);
   }
 
