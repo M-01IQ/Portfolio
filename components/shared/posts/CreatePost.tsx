@@ -13,13 +13,13 @@ const supabase = createClient();
 
 export default function CreatePost({ onAddSuccess }: CreatePostProps) {
   const { showToast } = useToast();
-
+  //state management 
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [num, setNum] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-
+  //Add post function 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -31,7 +31,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
     setLoading(true);
     let img_url = "";
 
-    // 1. رفع الصورة إلى Supabase Storage إن وجدت
+    // Upload image to storage 
     if (file) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -54,7 +54,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
       img_url = urlData.publicUrl;
     }
 
-    // 2. إدخال البيانات في جدول posts
+    // Save post in database
     const { data, error } = await supabase
       .from("posts")
       .insert([
@@ -66,9 +66,8 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
         },
       ])
       .select();
-
     setLoading(false);
-
+    // Handle upload error
     if (error) {
       showToast("حدث خطأ أثناء إضافة البيانات: " + error.message, "error");
     } else if (data && data.length > 0) {
@@ -77,7 +76,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
         onAddSuccess(data[0]);
       }
 
-      // إعادة ضبط الحقول
+      // تفريغ الحقول
       setTitle("");
       setText("");
       setNum("");
@@ -88,8 +87,9 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-base-100 shadow-xl rounded-3xl border border-base-200 text-right" dir="rtl">
       <h2 className="text-xl font-bold mb-6 text-center text-primary">إضافة عنصر جديد</h2>
-
+        {/* Post Addition Form  */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Post Title */}
         <div className="form-control w-full">
           <label className="label" htmlFor="title">
             <span className="label-text font-semibold">العنوان (Title)</span>
@@ -104,7 +104,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
             required
           />
         </div>
-
+        {/* Post Text  */}
         <div className="form-control w-full">
           <label className="label" htmlFor="text">
             <span className="label-text font-semibold">النص (Text)</span>
@@ -118,7 +118,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
             onChange={(e) => setText(e.target.value)}
           />
         </div>
-
+        {/* post img  */}
         <div className="form-control w-full">
           <label className="label" htmlFor="file">
             <span className="label-text font-semibold">الصورة (Image)</span>
@@ -131,7 +131,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
         </div>
-
+        {/* Post Rating  */}
         <div className="form-control w-full">
           <label className="label" htmlFor="num">
             <span className="label-text font-semibold">التقييم (Rating)</span>
@@ -147,7 +147,7 @@ export default function CreatePost({ onAddSuccess }: CreatePostProps) {
             onChange={(e) => setNum(e.target.value)}
           />
         </div>
-
+        {/* Add post button   */}
         <button
           type="submit"
           disabled={loading}

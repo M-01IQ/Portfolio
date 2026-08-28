@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { createClient } from "@/config/createClient";
 import { useToast } from "@/components/ui/PopUp/ToastContext";
 import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
-
+//interface
 export interface TableItem {
   id: string | number;
   title: string;
@@ -22,7 +22,7 @@ export interface CardPostProps {
 
 const supabase = createClient();
 
-// 💡 دالة استخراج مسار الملف المباشر داخل الـ Bucket بغض النظر عن حالة الأحرف
+//Extracting the file path within the Bucket 
 const getStoragePathFromUrl = (url: string): string | null => {
   if (!url) return null;
   try {
@@ -36,24 +36,26 @@ const getStoragePathFromUrl = (url: string): string | null => {
   return null;
 };
 
-// 💡 دالة فرعية لحذف صورة من الـ Storage
+//Delete image from storage 
 const deleteImageFromStorage = async (url: string) => {
+  //Check the image path 
   const filePath = getStoragePathFromUrl(url);
   if (!filePath) return;
-
+  //Delete the image
   const { error } = await supabase.storage
-    .from("posts") // اسم الـ Bucket موحد بالـ Capital
+    .from("posts")
     .remove([filePath]);
-
+    //Handling the delete error 
   if (error) {
     console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
   }
 };
 
+// Main CardPost component with props
 export default function CardPost({ item, onDelete, onUpdate }: CardPostProps) {
+  //State management 
   const { showToast } = useToast();
   const { askConfirm } = useConfirm();
-
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(item.title);
   const [text, setText] = useState(item.text || "");
@@ -62,30 +64,31 @@ export default function CardPost({ item, onDelete, onUpdate }: CardPostProps) {
   const [num, setNum] = useState(item.num || "");
   const [loading, setLoading] = useState(false);
 
-  // 🗑️ دالة الحذف الكلية
+  //  Delete function  
   const handleDelete = (id: string | number) => {
+    // Confirm deletion 
     askConfirm(
       "تأكيد الحذف",
       "هل أنت متاكد من إزالة هذا المنشور وصورته نهائياً؟",
       async () => {
         try {
-          // 1. حذف المنشور من قاعدة البيانات أولاً
+          // Delete from database 
           const { error: dbError } = await supabase
             .from("posts")
             .delete()
             .eq("id", id);
-
+          //Handling deletion error 
           if (dbError) {
             showToast("حدث خطأ أثناء الحذف من القاعدة: " + dbError.message, "error");
             return;
           }
-
-          // 2. حذف الصورة من Supabase Storage إن وجدت
+          // //Delete the image from storage 
           if (item.img_url) {
             await deleteImageFromStorage(item.img_url);
           }
-
+          // Successful deletion 
           showToast("تم حذف المنشور والصورة بنجاح.", "success");
+          
           if (onDelete) onDelete(id);
         } catch (err: any) {
           showToast(err.message || "حدث خطأ غير متوقع", "error");
@@ -94,46 +97,46 @@ export default function CardPost({ item, onDelete, onUpdate }: CardPostProps) {
     );
   };
 
-  // رفع الصورة
+  // Upload image 
 const uploadImage = async (file: File): Promise<string | null> => {
   const fileExt = file.name.split(".").pop();
   const fileName = `${Date.now()}.${fileExt}`;
   
   const filePath = `posts/${fileName}`;
-
+  //upload to storage
   const { error: uploadError } = await supabase.storage
     .from("posts") 
     .upload(filePath, file);
-
+  //Handling upload error 
   if (uploadError) {
     showToast("فشل رفع الصورة: " + uploadError.message, "error");
     return null;
   }
-
+  //get image path from storage 
   const { data } = supabase.storage.from("posts").getPublicUrl(filePath);
   return data.publicUrl;
 };
 
 
-  //  دالة التعديل والحفظ
+  //  Update function 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     let finalImgUrl = imgUrl;
 
-    // إذا تم اختيار صورة جديدة في التعديل
+    // Image update 
     if (selectedFile) {
       const uploadedUrl = await uploadImage(selectedFile);
       if (uploadedUrl) {
-        // حذف الصورة القديمة
+        // Delete the old img 
         if (item.img_url) {
           await deleteImageFromStorage(item.img_url);
         }
         finalImgUrl = uploadedUrl;
       }
     }
-
+    //Update post data 
     const { data, error } = await supabase
       .from("posts")
       .update({ title, text, img_url: finalImgUrl, num: num ? Number(num) : null })
@@ -141,7 +144,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
       .select();
 
     setLoading(false);
-
+    //Handling update error 
     if (error) {
       showToast("حدث خطأ أثناء التعديل: " + error.message, "error");
     } else if (data && data.length > 0) {
@@ -152,7 +155,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
     }
   };
 
-  // 📝 1️⃣ وضع التحرير (Edit Mode)
+  // Editing mode 
   if (isEditing) {
     return (
       <div className="card w-full max-w-xl mx-auto bg-base-100 border border-primary p-5 shadow-xl rounded-3xl mt-2 text-right" dir="rtl">
@@ -219,7 +222,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
     );
   }
 
-  // 🖼️ 2️⃣ وضع العرض الطبيعي
+  // Display mode 
   return (
     <div className="card w-full max-w-xl mx-auto bg-base-100 border border-base-300 shadow-md rounded-3xl overflow-hidden mb-6 text-right transition-all duration-300 hover:shadow-lg mt-2" dir="rtl">
       <div className="flex items-center justify-between p-4 pb-2">
@@ -232,9 +235,6 @@ const uploadImage = async (file: File): Promise<string | null> => {
 
           <div className="flex flex-col text-right">
             <div className="flex items-center gap-2">
-              <span className="badge badge-ghost badge-sm font-mono text-xs opacity-80">
-                #{item.id}
-              </span>
               {item.section && (
                 <span className="badge badge-neutral badge-xs py-2 px-2 text-[10px]">
                   {item.section}
@@ -262,7 +262,7 @@ const uploadImage = async (file: File): Promise<string | null> => {
             <img
               src={item.img_url}
               alt={item.title}
-              className="rounded-2xl max-h-56 object-cover w-full"
+              className="rounded-2xl max-h-auto object-cover w-full"
             />
           </div>
         )}
