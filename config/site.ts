@@ -9,6 +9,7 @@ export const siteConfig = {
 export const defaultMetadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
+  manifest: '/manifest.json',
   icons: {
     icon: '/icon.png',
     shortcut: '/icon.png',
