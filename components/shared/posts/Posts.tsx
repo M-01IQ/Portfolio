@@ -60,8 +60,7 @@ export default function Posts() {
   const filteredPosts = posts?.filter((item) => {
     const searchTerm = filter.toLowerCase();
     return (
-      item.title?.toLowerCase().includes(searchTerm) ||
-      item.content?.toLowerCase().includes(searchTerm)
+      item.title?.toLowerCase().includes(searchTerm)
     );
   });
 
