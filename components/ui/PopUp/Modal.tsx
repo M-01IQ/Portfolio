@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,15 +10,29 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open modal-center sm:modal-middle" dir="rtl">
-      {/* dark background */}
-      <div className="modal-backdrop bg-black/50" onClick={onClose}></div>
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 overflow-hidden" dir="rtl">
+      {/* Prevent background touching */}
+      <div 
+        className="fixed inset-0 bg-black/40 transition-all cursor-pointer" 
+        onClick={onClose}
+      />
 
-      <div className="modal-box relative z-10 bg-base-100 p-6 shadow-xl">
-        {/* Close button */}
+      {/* Model box */}
+      <div className="relative z-50 w-full max-w-lg bg-base-100 rounded-3xl p-6 shadow-2xl border border-base-200">
         <button
           onClick={onClose}
           className="btn btn-sm btn-circle btn-ghost absolute left-4 top-4"
@@ -26,10 +40,8 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
           ✕
         </button>
 
-        {/* Window title, if available */}
         {title && <h3 className="text-lg font-bold mb-4">{title}</h3>}
 
-        {/* Content */}
         <div className="mt-2">{children}</div>
       </div>
     </div>

@@ -19,6 +19,19 @@ export default function Navbar() {
 
   const supabase = createClient();
 
+  // 🔒 1. قفل السكرول ومنع التفاعل بالخلفية عند فتح النافبار على الموبايل
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     setMounted(true);
 
@@ -155,15 +168,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Backdrop / Overlay */}
-        {isOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
-            onClick={() => setIsOpen(false)}
-          />
-        )}
-
-        {/* Side-Drawer Mobile Menu */}
+        {/* Side-Drawer Mobile Menu (z-50) */}
         <div 
           id="mobile-menu"
           className={`fixed top-0 right-0 z-50 h-full w-64 bg-base-100 border-l border-base-300 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${
@@ -245,6 +250,14 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
+
+      {/* 🛡️ 2. Backdrop / Overlay خارجي يُغطي كامل الشاشة لمنع اللمس نهائياً (z-40) */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity cursor-pointer"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
       {/* تعويض ارتفاع الـ Navbar */}
       <div className="h-16" />

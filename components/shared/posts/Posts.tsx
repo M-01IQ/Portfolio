@@ -3,19 +3,19 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/config/createClient";
 import CardPost, { TableItem } from "./CardPost";
-import CreatePost from "./CreatePost";
-import Modal from "@/components/ui/PopUp/Modal";
+import PostFormModal from "./PostFormModal";
 
 export default function Posts() {
-  // State management 
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [posts, setPosts] = useState<TableItem[] | null>(null);
   const [filter, setFilter] = useState("");
+
+  // Model control 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<TableItem | null>(null);
 
   const supabase = createClient();
 
-  // Fetch Posts 
   useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
@@ -35,50 +35,49 @@ export default function Posts() {
     fetchPosts();
   }, []);
 
-  // Handlers
-  const handleAddItem = (newItem: TableItem) => {
-    // Update the list 
-    setPosts((prevData) => (prevData ? [newItem, ...prevData] : [newItem]));
-    setIsModalOpen(false);
+  const handleOpenAdd = () => {
+    setEditingItem(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (item: TableItem) => {
+    setEditingItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleFormSuccess = (item: TableItem, isEdit: boolean) => {
+    if (isEdit) {
+      setPosts((prev) =>
+        prev ? prev.map((p) => (p.id === item.id ? item : p)) : []
+      );
+    } else {
+      setPosts((prev) => (prev ? [item, ...prev] : [item]));
+    }
   };
 
   const handleDeleteItem = (id: string | number) => {
-    setPosts((prevData) =>
-      prevData ? prevData.filter((item) => item.id !== id) : []
-    );
+    setPosts((prev) => (prev ? prev.filter((item) => item.id !== id) : []));
   };
 
-  const handleUpdateItem = (updatedItem: TableItem) => {
-    setPosts((prevData) =>
-      prevData
-        ? prevData.map((item) => (item.id === updatedItem.id ? updatedItem : item))
-        : []
-    );
-  };
-
-  // Filter Logic
-  const filteredPosts = posts?.filter((item) => {
-    const searchTerm = filter.toLowerCase();
-    return (
-      item.title?.toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredPosts = posts?.filter((item) =>
+    item.title?.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
-    <div className="max-w-7xl mx-auto" dir="rtl">
+    <div className="relative min-h-screen max-w-7xl mx-auto pt-4" dir="rtl">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">العناصر</h1>
-        
-        {/* isModalOpen button */}
-        <button
-          className="btn btn-primary btn-circle text-xl shadow-md"
-          onClick={() => setIsModalOpen(true)}
-          title="إضافة عنصر جديد"
-        >
-          +
-        </button>
       </div>
+
+      {/* Add button  */}
+      <button
+        className="fixed bottom-8 right-6 z-30 btn btn-primary btn-circle text-2xl shadow-xl opacity-75 hover:opacity-100 hover:scale-110 transition-all duration-300"
+        onClick={handleOpenAdd}
+        title="إضافة عنصر جديد"
+      >
+        +
+      </button>
 
       {/* Filter Input */}
       <div className="mb-6 flex items-center">
@@ -90,14 +89,6 @@ export default function Posts() {
           onChange={(e) => setFilter(e.target.value)}
         />
       </div>
-      
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="إضافة منشور جديد"
-      >
-        <CreatePost onAddSuccess={handleAddItem} />
-      </Modal>
 
       {/* Error handling */}
       {fetchError && (
@@ -113,7 +104,7 @@ export default function Posts() {
         </div>
       )}
 
-      {/* Empty State / No Search Results */}
+      {/* Empty State */}
       {filteredPosts && filteredPosts.length === 0 && posts && (
         <p className="text-center text-base-content/60 py-8">
           {filter ? "لا توجد نتائج تطابق بحثك." : "لا توجد عناصر لعرضها حالياً."}
@@ -122,17 +113,25 @@ export default function Posts() {
 
       {/* Render Posts Grid */}
       {filteredPosts && filteredPosts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
           {filteredPosts.map((item) => (
             <CardPost
               key={item.id}
               item={item}
               onDelete={handleDeleteItem}
-              onUpdate={handleUpdateItem}
+              onEdit={handleOpenEdit}
             />
           ))}
         </div>
       )}
+
+      {/* Add and edit modal  */}
+      <PostFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialData={editingItem}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 }

@@ -19,14 +19,14 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
-    // 1. التحقق من تطابق كلمتي المرور
+    // Password verification 
     if (password !== confirmPassword) {
       showToast("يرجى تأكيد كلمة المرور، الكلمتان غير متطابقتين", "error");
       setLoading(false);
       return;
     } 
 
-    // 2. التحقق من طول كلمة المرور (على الأقل 6 أحرف)
+    // Password length check
     if (password.length < 6) {
       showToast("يجب أن تكون كلمة المرور 6 أحرف على الأقل", "error");
       setLoading(false);
@@ -67,7 +67,6 @@ export default function Register() {
         onSubmit={handleRegister} 
         className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md space-y-4 relative"
       >
-        {/* 🔹 رأس الكارت: زر العودة بسهم موجّه إلى /auth/welcome */}
         <div className="flex items-center justify-between pb-2 border-b border-gray-100">
           <Link
             href="/auth/welcome"
@@ -88,8 +87,6 @@ export default function Register() {
           </Link>
 
           <h1 className="text-xl font-bold text-gray-800">إنشاء حساب جديد</h1>
-          
-          {/* عنصر موازنة لموازنة العنوان في المنتصف */}
           <div className="w-12"></div>
         </div>
 

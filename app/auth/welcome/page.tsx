@@ -13,7 +13,7 @@ export default function Welcome() {
   const router = useRouter();
   const supabase = createClient();
 
-  // 🔹 دالة الدخول المباشر كضيف
+  // Guest login function 
   const handleGuestLogin = async () => {
     setGuestLoading(true);
 
@@ -38,19 +38,18 @@ export default function Welcome() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4" dir="rtl">
-      {/* تم تكبير العرض إلى max-w-md لإعطاء مساحة أكبر وأريحية للبطاقة */}
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md space-y-6 text-center">
         
-        {/* العنوان والوصف */}
+        {/* Title and description */}
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-gray-900">مرحباً بك</h1>
           <p className="text-sm text-gray-500">اختر طريقة للمتابعة للوصول إلى التطبيق</p>
         </div>
 
-        {/* قائمة الأزرار */}
+        {/* Button list */}
         <div className="space-y-3 pt-2">
           
-          {/* 1. زر تسجيل الدخول */}
+          {/* Login button */}
           <Link 
             href="/auth/login"
             className="w-full flex items-center justify-center py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm cursor-pointer text-base"
@@ -58,21 +57,20 @@ export default function Welcome() {
             تسجيل الدخول
           </Link>
 
-          {/* 2. زر إنشاء حساب جديد */}
+          {/* Create account button */}
           <Link 
             href="/auth/register"
             className="w-full flex items-center justify-center py-3 px-4 border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium rounded-xl transition-colors cursor-pointer text-base"
           >
             إنشاء حساب جديد
           </Link>
-
-          {/* فاصل شكلي */}
+          
           <div className="relative my-5 flex items-center justify-center">
             <div className="border-t border-gray-200 w-full"></div>
             <span className="bg-white px-3 text-xs text-gray-400 absolute">أو</span>
           </div>
 
-          {/* 3. زر المتابعة كضيف */}
+          {/* Log in as a guest */}
           <button
             type="button"
             onClick={handleGuestLogin}

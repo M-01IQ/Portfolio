@@ -64,7 +64,6 @@ export default function Login() {
 
           <h1 className="text-xl font-bold text-gray-800">تسجيل الدخول</h1>
           
-          {/* عنصر موازنة لموازنة العنوان في المنتصف */}
           <div className="w-12"></div>
         </div>
 
