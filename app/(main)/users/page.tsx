@@ -7,34 +7,29 @@ import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
 export default function UserSupa() {
   const supabase = useMemo(() => createClient(), [])
 
-  // تعريف المتغيرات
+  // تعريف المتغيرات المتوافقة مع جدول profiles
   const [users, setUsers] = useState<any[]>([])
-  const [name, setName] = useState("")
-  const [birthDate, setBirthDate] = useState("")
+  const [userName, setUserName] = useState("")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [editingId, setEditingId] = useState<any>(null) // لمعرفة هل نحن في وضع التعديل أم الإضافة
+  const [editingId, setEditingId] = useState<any>(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const { showToast } = useToast();
   const { askConfirm } = useConfirm();
-  const [showPassword, setShowPassword] = useState(false)
 
-  // دالة إفراغ الحقول وإلغاء وضع التعديل
+  // دالة إفراغ الحقول
   const resetForm = () => {
-    setName("")
-    setBirthDate("")
+    setUserName("")
     setEmail("")
-    setPassword("")
     setEditingId(null)
   }
 
-  // دالة جلب البيانات
+  // دالة جلب البيانات من جدول profiles
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
-      const { data, error } = await supabase.from("users").select("*")
+      const { data, error } = await supabase.from("profiles").select("*")
       if (error) setError(error.message)
       else setUsers(data || [])
     } catch (err: any) {
@@ -51,12 +46,10 @@ export default function UserSupa() {
   // دالة الإضافة
   const handleAdd = async () => {
     const { error } = await supabase
-      .from("users")
+      .from("profiles")
       .insert([{ 
-        name, 
-        birth_date: birthDate, 
-        email, 
-        password 
+        user_name: userName, 
+        email 
       }])
 
     if (error) {
@@ -71,12 +64,10 @@ export default function UserSupa() {
   // دالة التعديل
   const handleUpdate = async () => {
     const { error } = await supabase
-      .from("users")
+      .from("profiles")
       .update({ 
-        name, 
-        birth_date: birthDate, 
-        email, 
-        password 
+        user_name: userName, 
+        email 
       })
       .eq("id", editingId)
 
@@ -89,7 +80,7 @@ export default function UserSupa() {
     }
   }
 
-  // دالة معالجة إرسال النموذج (تحدد هل هي إضافة أم تعديل)
+  // معالجة الإرسال
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -108,27 +99,25 @@ export default function UserSupa() {
     }
   }
 
-  // عند الضغط على زر التعديل في بطاقة المستخدم
+  // عند الضغط على تعديل
   const handleEditClick = (item: any) => {
     setEditingId(item.id)
-    setName(item.name || "")
-    setBirthDate(item.birth_date || "")
+    setUserName(item.user_name || "")
     setEmail(item.email || "")
-    setPassword(item.password || "")
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // دالة الحذف (تم تصحيح هيكلة askConfirm)
+  // دالة الحذف
   const handleDelete = (item: any) => {
     askConfirm(
       "حذف المستخدم",
-      `هل أنت متأكد من حذف المستخدم: ${item.name || 'المحدد'}؟`,
+      `هل أنت متأكد من حذف المستخدم: ${item.user_name || 'المحدد'}؟`,
       async () => {
         setLoading(true)
         setError("")
 
         try {
-          const { error } = await supabase.from("users").delete().eq("id", item.id)
+          const { error } = await supabase.from("profiles").delete().eq("id", item.id)
 
           if (error) {
             setError(error.message)
@@ -154,7 +143,6 @@ export default function UserSupa() {
             {editingId ? "تعديل بيانات المستخدم" : "إضافة مستخدم جديد"}
           </h2>
 
-          {/* التنبيهات */}
           {error && (
             <div className="alert alert-error text-sm py-2">
               <span>{error}</span>
@@ -162,31 +150,17 @@ export default function UserSupa() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* الاسم */}
+            {/* اسم المستخدم */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">الاسم الكامل</span>
+                <span className="label-text font-medium">اسم المستخدم (user_name)</span>
               </label>
               <input
                 type="text"
-                placeholder="أدخل الاسم"
+                placeholder="أدخل اسم المستخدم"
                 className="input input-bordered w-full focus:outline-primary"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* تاريخ الميلاد */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">تاريخ الميلاد</span>
-              </label>
-              <input
-                type="date"
-                className="input input-bordered w-full focus:outline-primary"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
                 required
               />
             </div>
@@ -194,7 +168,7 @@ export default function UserSupa() {
             {/* البريد الإلكتروني */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">البريد الإلكتروني</span>
+                <span className="label-text font-medium">البريد الإلكتروني (email)</span>
               </label>
               <input
                 type="email"
@@ -204,30 +178,6 @@ export default function UserSupa() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-            
-            {/* كلمة المرور */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">كلمة المرور</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="- - - - - - -"
-                  className="input input-bordered w-full pl-12 focus:outline-primary"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 text-xl"
-                >
-                  {showPassword ? "🙈" : "️🙉"}
-                </button>
-              </div>
             </div>
 
             {/* الأزرار */}
@@ -261,10 +211,9 @@ export default function UserSupa() {
             key={item.id} 
             className="w-80 bg-base-100 rounded-2xl border border-base-300 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col items-center text-center"
           >
-            <h2 className="text-xl font-bold mb-1">{item.name}</h2>
-            <p className="text-sm opacity-70 mb-1">تاريخ الميلاد: {item.birth_date}</p>
-            <p className="text-sm opacity-70 mb-1">البريد الإلكتروني: {item.email}</p>
-            <p className="text-sm opacity-70 mb-4">كلمة المرور: {item.password}</p>
+            <h2 className="text-xl font-bold mb-2">{item.user_name || "بدون اسم"}</h2>
+            <p className="text-sm opacity-70 mb-2">البريد الإلكتروني: {item.email}</p>
+            <p className="text-xs text-base-content/50 mb-4 dir-ltr font-mono">ID: {item.id}</p>
 
             <div className="flex gap-2 w-full mt-auto pt-2">
               <button
