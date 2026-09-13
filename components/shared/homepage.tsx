@@ -1,5 +1,3 @@
-import SectorBarTest from "@/components/ui/SectorBarTest";
-
 import Posts from "@/components/shared/posts/Posts";
 export default function Home() {
   return (
