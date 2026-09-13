@@ -20,8 +20,8 @@ import {
 // بيانات افتراضية للرسوم البيانية
 const pieData = [
   { name: 'مكتمل', value: 400, color: '#16a34a' },
-  { name: 'قيد الانتظار', value: 300, color: '#22c55e' },
-  { name: 'ملغي', value: 100, color: '#86efac' }
+  { name: 'قيد الانتظار', value: 300, color: '#ff9b00' },
+  { name: 'ملغي', value: 100, color: 'red' }
 ]
 
 const lineData = [

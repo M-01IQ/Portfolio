@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/config/createClient";
 import CardPost, { TableItem } from "./CardPost";
 import PostFormModal from "./PostFormModal";
+import Loading from "@/components/ui/Loading/Loading";
 
 export default function Posts() {
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -67,14 +68,14 @@ export default function Posts() {
     <div className="relative min-h-screen max-w-7xl mx-auto pt-4" dir="rtl">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">العناصر</h1>
+        <h1 className="text-2xl font-bold">المنشورات</h1>
       </div>
 
       {/* Add button  */}
       <button
         className="fixed bottom-8 right-6 z-30 btn btn-primary btn-circle text-2xl shadow-xl opacity-75 hover:opacity-100 hover:scale-110 transition-all duration-300"
         onClick={handleOpenAdd}
-        title="إضافة عنصر جديد"
+        title="إضافة منشور جديد"
       >
         +
       </button>
@@ -99,15 +100,14 @@ export default function Posts() {
 
       {/* Loading State */}
       {!posts && !fetchError && (
-        <div className="flex justify-center p-8">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
+      <Loading></Loading>
       )}
+
 
       {/* Empty State */}
       {filteredPosts && filteredPosts.length === 0 && posts && (
         <p className="text-center text-base-content/60 py-8">
-          {filter ? "لا توجد نتائج تطابق بحثك." : "لا توجد عناصر لعرضها حالياً."}
+          {filter ? "لا توجد نتائج تطابق بحثك." : "لا توجد منشورات لعرضها حالياً."}
         </p>
       )}
 

@@ -127,7 +127,7 @@ export default function PostFormModal({
     if (dbError) {
       showToast("حدث خطأ: " + dbError.message, "error");
     } else if (resultData) {
-      showToast(isEdit ? "تم حفظ التعديلات بنجاح!" : "تمت إضافة العنصر بنجاح!", "success");
+      showToast(isEdit ? "تم حفظ التعديلات بنجاح!" : "تمت النشر بنجاح!", "success");
       onSuccess(resultData, isEdit);
       onClose();
     }
@@ -142,7 +142,7 @@ export default function PostFormModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-right" dir="rtl">
         <div className="form-control w-full">
           <label className="label" htmlFor="modal-title">
-            <span className="label-text font-semibold">العنوان (Title)</span>
+            <span className="label-text font-semibold">العنوان</span>
           </label>
           <input
             id="modal-title"
@@ -157,7 +157,7 @@ export default function PostFormModal({
 
         <div className="form-control w-full">
           <label className="label" htmlFor="modal-text">
-            <span className="label-text font-semibold">النص (Text)</span>
+            <span className="label-text font-semibold">النص</span>
           </label>
           <input
             id="modal-text"
@@ -210,7 +210,7 @@ export default function PostFormModal({
           ) : isEdit ? (
             "حفظ التعديل"
           ) : (
-            "إضافة إلى الجدول"
+            "نشر"
           )}
         </button>
       </form>
