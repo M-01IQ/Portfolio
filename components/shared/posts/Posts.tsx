@@ -11,28 +11,30 @@ export default function Posts() {
   const [posts, setPosts] = useState<TableItem[] | null>(null);
   const [filter, setFilter] = useState("");
 
-  // Model control 
+  // Modal control 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TableItem | null>(null);
 
   const supabase = createClient();
 
+  // دالة جلب المنشورات مع بيانات المستخدم (profiles) وبضمنها avatar_url
+  const fetchPosts = async () => {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*, profiles(user_name, email, avatar_url)")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error("خطأ جلب البيانات:", error.message);
+      setFetchError("تعذر جلب البيانات من الجدول.");
+      setPosts([]);
+    } else if (data) {
+      setPosts(data as unknown as TableItem[]);
+      setFetchError(null);
+    }
+  };
+
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*")
-        .order("id", { ascending: false });
-
-      if (error) {
-        setFetchError("تعذر جلب البيانات من الجدول.");
-        setPosts([]);
-      } else if (data) {
-        setPosts(data);
-        setFetchError(null);
-      }
-    };
-
     fetchPosts();
   }, []);
 
@@ -46,14 +48,9 @@ export default function Posts() {
     setIsModalOpen(true);
   };
 
-  const handleFormSuccess = (item: TableItem, isEdit: boolean) => {
-    if (isEdit) {
-      setPosts((prev) =>
-        prev ? prev.map((p) => (p.id === item.id ? item : p)) : []
-      );
-    } else {
-      setPosts((prev) => (prev ? [item, ...prev] : [item]));
-    }
+  // إعادة جلب المنشورات عند الإضافة أو التعديل لضمان استدعاء كائن profiles فوراً
+  const handleFormSuccess = async (_item: TableItem, _isEdit: boolean) => {
+    await fetchPosts();
   };
 
   const handleDeleteItem = (id: string | number) => {
@@ -71,7 +68,7 @@ export default function Posts() {
         <h1 className="text-2xl font-bold">المنشورات</h1>
       </div>
 
-      {/* Add button  */}
+      {/* Add button */}
       <button
         className="fixed bottom-8 right-6 z-30 btn btn-primary btn-circle text-2xl shadow-xl opacity-75 hover:opacity-100 hover:scale-110 transition-all duration-300"
         onClick={handleOpenAdd}
@@ -100,9 +97,8 @@ export default function Posts() {
 
       {/* Loading State */}
       {!posts && !fetchError && (
-      <Loading></Loading>
+        <Loading />
       )}
-
 
       {/* Empty State */}
       {filteredPosts && filteredPosts.length === 0 && posts && (
@@ -113,7 +109,7 @@ export default function Posts() {
 
       {/* Render Posts Grid */}
       {filteredPosts && filteredPosts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPosts.map((item) => (
             <CardPost
               key={item.id}
@@ -125,7 +121,7 @@ export default function Posts() {
         </div>
       )}
 
-      {/* Add and edit modal  */}
+      {/* Add and edit modal */}
       <PostFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

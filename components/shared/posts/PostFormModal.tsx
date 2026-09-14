@@ -41,7 +41,7 @@ export default function PostFormModal({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-// Fill fields if editing, clear them if adding new
+  // Fill fields if editing, clear them if adding new
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || "");
@@ -64,6 +64,16 @@ export default function PostFormModal({
     }
 
     setLoading(true);
+
+    // 1. جلب بيانات المستخدم الحالي
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      showToast("يرجى تسجيل الدخول لكي تتمكن من إدراج منشور", "error");
+      setLoading(false);
+      return;
+    }
+
     let finalImgUrl = initialData?.img_url || "";
 
     // Upload image 
@@ -95,11 +105,13 @@ export default function PostFormModal({
       finalImgUrl = urlData.publicUrl;
     }
 
+    // 2. تجهيز البيانات وتمرير user_id
     const payload = {
       title,
       text,
       img_url: finalImgUrl,
       num: num ? Number(num) : null,
+      user_id: user.id, // ربط المنشور بالمستخدم
     };
 
     let resultData: TableItem | null = null;

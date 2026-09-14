@@ -1,8 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* ضع خيارات الإعدادات الخاصة بك هنا إن وجدت */
-  
-
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.in',
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;

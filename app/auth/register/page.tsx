@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/PopUp/ToastContext";
 
 export default function Register() {
   const { showToast } = useToast();
+  const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,6 +19,13 @@ export default function Register() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Username verification
+    if (!userName.trim()) {
+      showToast("يرجى إدخال اسم المستخدم", "error");
+      setLoading(false);
+      return;
+    }
 
     // Password verification 
     if (password !== confirmPassword) {
@@ -37,6 +45,11 @@ export default function Register() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
+        options: {
+          data: {
+            user_name: userName.trim(),
+          },
+        },
       });
 
       if (error) {
@@ -88,6 +101,18 @@ export default function Register() {
 
           <h1 className="text-xl font-bold text-gray-800">إنشاء حساب جديد</h1>
           <div className="w-12"></div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">اسم المستخدم</label>
+          <input
+            type="text"
+            required
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            className="w-full p-2 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
+            placeholder="أدخل اسم المستخدم"
+          />
         </div>
 
         <div>
