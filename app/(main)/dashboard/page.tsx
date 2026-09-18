@@ -139,7 +139,7 @@ const Dashboard = () => {
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
-                wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} 
+                wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
                 formatter={(value) => <span className="text-base-content">{value}</span>}
               />
               <Bar dataKey="sales" name="المبيعات" fill="#16a34a" radius={[4, 4, 0, 0]} />
