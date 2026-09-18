@@ -37,20 +37,17 @@ export default function PostFormModal({
 
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const [num, setNum] = useState<string | number>("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fill fields if editing, clear them if adding new
+  // ملء الحقول عند التعديل وتفريغها عند الإضافة
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || "");
       setText(initialData.text || "");
-      setNum(initialData.num || "");
     } else {
       setTitle("");
       setText("");
-      setNum("");
     }
     setFile(null);
   }, [initialData, isOpen]);
@@ -76,7 +73,7 @@ export default function PostFormModal({
 
     let finalImgUrl = initialData?.img_url || "";
 
-    // Upload image 
+    // رفع الصورة
     if (file) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -96,7 +93,7 @@ export default function PostFormModal({
         .from("posts")
         .getPublicUrl(filePath);
 
-      // Delete the old image when editing 
+      // حذف الصورة القديمة في حال التعديل
       if (isEdit && initialData?.img_url) {
         const oldPath = getStoragePathFromUrl(initialData.img_url);
         if (oldPath) await supabase.storage.from("posts").remove([oldPath]);
@@ -105,13 +102,12 @@ export default function PostFormModal({
       finalImgUrl = urlData.publicUrl;
     }
 
-    // 2. تجهيز البيانات وتمرير user_id
+    // 2. تجهيز البيانات بدون حقل num
     const payload = {
       title,
       text,
       img_url: finalImgUrl,
-      num: num ? Number(num) : null,
-      user_id: user.id, // ربط المنشور بالمستخدم
+      user_id: user.id,
     };
 
     let resultData: TableItem | null = null;
@@ -139,7 +135,7 @@ export default function PostFormModal({
     if (dbError) {
       showToast("حدث خطأ: " + dbError.message, "error");
     } else if (resultData) {
-      showToast(isEdit ? "تم حفظ التعديلات بنجاح!" : "تمت النشر بنجاح!", "success");
+      showToast(isEdit ? "تم حفظ التعديلات بنجاح!" : "تم النشر بنجاح!", "success");
       onSuccess(resultData, isEdit);
       onClose();
     }
@@ -193,22 +189,6 @@ export default function PostFormModal({
             accept="image/*"
             className="file-input file-input-bordered file-input-sm sm:file-input-md w-full"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-        </div>
-
-        <div className="form-control w-full">
-          <label className="label" htmlFor="modal-num">
-            <span className="label-text font-semibold">التقييم (Rating)</span>
-          </label>
-          <input
-            id="modal-num"
-            type="number"
-            min="1"
-            max="5"
-            className="input input-bordered input-sm sm:input-md w-full"
-            placeholder="من 1 إلى 5"
-            value={num}
-            onChange={(e) => setNum(e.target.value)}
           />
         </div>
 

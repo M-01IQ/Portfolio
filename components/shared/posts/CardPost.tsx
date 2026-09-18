@@ -9,6 +9,7 @@ export interface ProfileData {
   user_name?: string;
   avatar_url?: string;
   email?: string;
+  role?: string;
 }
 
 export interface TableItem {
@@ -16,14 +17,19 @@ export interface TableItem {
   title: string;
   text?: string;
   img_url: string;
-  num?: number | string;
   section?: string;
   user_id?: string;
-  profiles?: ProfileData | ProfileData[]; // جلب بيانات صاحب المنشور من علاقة JOIN
+  profiles?: ProfileData | ProfileData[];
+}
+
+export interface CurrentUser {
+  id: string;
+  role?: string;
 }
 
 export interface CardPostProps {
   item: TableItem;
+  currentUser?: CurrentUser | null; // إضافة المستخدم الحالي
   onDelete?: (id: string | number) => void;
   onEdit?: (item: TableItem) => void;
 }
@@ -48,14 +54,18 @@ const deleteImageFromStorage = async (url: string) => {
   if (error) console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
 };
 
-export default function CardPost({ item, onDelete, onEdit }: CardPostProps) {
+export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
   const { showToast } = useToast();
   const { askConfirm } = useConfirm();
 
-  // معالجة جلب بيانات الملف الشخصي لكونها قد تعود كـ Object أو Array من Supabase
   const profile = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
   const authorName = profile?.user_name || "مستخدم";
   const authorAvatar = profile?.avatar_url;
+
+  // فحص الصلاحية: هل صاحب المنشور أم Admin؟
+  const isOwner = currentUser?.id && item.user_id && currentUser.id === item.user_id;
+  const isAdmin = currentUser?.role === "admin";
+  const canManage = Boolean(isOwner || isAdmin);
 
   const handleDelete = (id: string | number) => {
     askConfirm(
@@ -80,35 +90,44 @@ export default function CardPost({ item, onDelete, onEdit }: CardPostProps) {
 
   return (
     <div className="card w-full max-w-xl mx-auto bg-base-100 border border-base-300 shadow-md rounded-3xl overflow-hidden mb-6 text-right transition-all duration-300 hover:shadow-lg mt-2" dir="rtl">
-      {/* هيدر الكارت: معلومات المستخدم */}
-      <div className="flex items-center justify-between p-4 pb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
-            {authorAvatar ? (
-              <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover object-center" />
-            ) : (
-              <span className="text-base font-black uppercase select-none leading-none">
-                {authorName.charAt(0)}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-base-content leading-tight">
-              {authorName}
-            </span>
-            {item.section && (
-              <span className="badge badge-neutral badge-xs py-1 px-2 text-[10px] w-fit mt-1">
-                {item.section}
-              </span>
-            )}
-          </div>
-        </div>
-        {item.num && (
-          <div className="badge badge-warning gap-1 font-semibold text-xs py-2 px-3">
-            ★ {item.num}
-          </div>
-        )}
-      </div>
+      {/* هيدر الكارت: معلومات المستخدم والدور */}
+<div className="flex items-center justify-between p-4 pb-2">
+  <div className="flex items-center gap-3">
+    <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+      {authorAvatar ? (
+        <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover object-center" />
+      ) : (
+        <span className="text-base font-black uppercase select-none leading-none">
+          {authorName.charAt(0)}
+        </span>
+      )}
+    </div>
+    <div className="flex flex-col">
+      <span className="text-sm font-bold text-base-content leading-tight">
+        {authorName}
+      </span>
+      {item.section && (
+        <span className="badge badge-neutral badge-xs py-1 px-2 text-[10px] w-fit mt-1">
+          {item.section}
+        </span>
+      )}
+    </div>
+  </div>
+
+  {/* شارة الـ Role بدلاً من التقييم والنجمة */}
+  {profile?.role && (
+    <div
+      className={`badge font-bold text-[11px] py-2 px-3 uppercase ${
+        profile.role === "admin"
+          ? "badge-primary text-primary-content shadow-sm"
+          : "badge-ghost bg-base-200 text-base-content/70"
+      }`}
+    >
+      {profile.role}
+    </div>
+  )}
+</div>
+
 
       {/* محتوى المنشور */}
       <div className="py-3">
@@ -133,24 +152,26 @@ export default function CardPost({ item, onDelete, onEdit }: CardPostProps) {
         )}
       </div>
 
-      {/* أزرار التحكم */}
-      <div className="p-4 pt-1">
-        <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-1 border border-base-200 gap-1">
-          <button
-            onClick={() => onEdit && onEdit(item)}
-            className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-info hover:bg-info/10"
-          >
-            <span className="text-xs font-bold">تعديل</span>
-          </button>
-          <div className="w-[1px] h-5 bg-base-300" />
-          <button
-            onClick={() => handleDelete(item.id)}
-            className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-error hover:bg-error/10"
-          >
-            <span className="text-xs font-bold">حذف</span>
-          </button>
+      {/* أزرار التحكم: تظهر فقط عند وجود الصلاحية */}
+      {canManage && (
+        <div className="p-4 pt-1">
+          <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-1 border border-base-200 gap-1">
+            <button
+              onClick={() => onEdit && onEdit(item)}
+              className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-info hover:bg-info/10"
+            >
+              <span className="text-xs font-bold">تعديل</span>
+            </button>
+            <div className="w-[1px] h-5 bg-base-300" />
+            <button
+              onClick={() => handleDelete(item.id)}
+              className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-error hover:bg-error/10"
+            >
+              <span className="text-xs font-bold">حذف</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
