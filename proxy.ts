@@ -6,7 +6,7 @@ export async function proxy(request: NextRequest) {
     request,
   });
 
-  // 1. جلب متغيرات البيئة
+  // Get environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseKey = 
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
@@ -14,11 +14,11 @@ export async function proxy(request: NextRequest) {
     '';
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn("⚠️ Supabase Environment Variables are missing!");
+    console.warn(" Supabase Environment Variables are missing!");
     return supabaseResponse;
   }
 
-  // 2. إنشاء عميل Supabase
+  // Create Supabase client
   const supabase = createServerClient(
     supabaseUrl,
     supabaseKey,
@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // 3. قراءة بيانات المستخدم
+  //  Get current user data
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -48,10 +48,9 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathname = url.pathname;
 
-  // 4. تحديد المسارات بالشكل الصحيح 🟢
-  const authRoutes = ['/app/auth/login', '/app/auth/register'];
+  // Define route paths
+  const authRoutes = ['/auth/login', '/auth/register', '/auth/welcome'];
   
-  // المسارات المحمية فقط (تأكد أن كل مسار يبدأ بـ / ولا تحتوي على عناصر فارغة)
   const protectedRoutes = [
     '/',
     '/dashboard', 
@@ -63,22 +62,35 @@ export async function proxy(request: NextRequest) {
 
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
   
-  // فحص المسار المحمي مع استثناء صفحات الـ Auth لمنع الـ Infinite Loop
   const isProtectedRoute = !isAuthRoute && protectedRoutes.some((route) => {
-    if (route === '/') return pathname === '/'; // مطابقة دقيقة للصفحة الرئيسية فقط
+    if (route === '/') return pathname === '/';
     return pathname.startsWith(route);
   });
 
-  // 🔴 غير مسجل وحاول دخول صفحة محمية -> توجيه للدخول
+  // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !user) {
     url.pathname = '/auth/welcome';
     return NextResponse.redirect(url);
   }
 
-  // 🟢 مسجل دخول وحاول دخول صفحات التسجيل -> توجيه للرئيسية
+  // Redirect authenticated users away from auth routes
   if (isAuthRoute && user) {
     url.pathname = '/';
     return NextResponse.redirect(url);
+  }
+
+  // Admin route protection for /users
+  if (pathname.startsWith('/users') && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      url.pathname = '/';
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

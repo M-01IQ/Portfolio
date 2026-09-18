@@ -17,7 +17,9 @@ const fontType = Reem_Kufi({
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ user_name: string | null; avatar_url: string | null } | null>(null);
+
+  // 1. تحديث الـ state ليشمل حقل role
+  const [profile, setProfile] = useState<{ user_name: string | null; avatar_url: string | null; role: string | null } | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
   const pathname = usePathname();
@@ -35,11 +37,11 @@ export default function Navbar() {
     };
   }, [isOpen]);
 
-  // 🔍 دالة جلب الملف الشخصي (مستقلة)
+  // 🔍 دالة جلب الملف الشخصي (تم إضافة role للاستعلام)
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("user_name, avatar_url")
+      .select("user_name, avatar_url, role") // 👈 إضافة role هنا
       .eq("id", userId)
       .single();
 
@@ -49,7 +51,6 @@ export default function Navbar() {
   useEffect(() => {
     setMounted(true);
 
-    // الاستماع للتغييرات في حالة التسجيل (يتعامل مع الجلسة الأوليّة والتغيرات المستقبليّة)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -78,16 +79,24 @@ export default function Navbar() {
     router.refresh();
   };
 
-  // 🔗 الروابط الأساسية
-  const navLinks = [
-    { name: "الصفحة الرئيسية", href: "/" },
-    { name: "لوحة التحكم", href: "/dashboard" },
-    { name: "الخريطة التفاعلية", href: "/InteractiveMap" },
-    { name: "الملف الشخصي", href: "/profile" },
-    { name: "المستخدمون", href: "/users" },
-    { name: "الاشعارات", href: "/notification" },
-    { name: "الاعدادات", href: "/setting" },
+  // 🔗 قائمة الروابط الكاملة مع تحديد الخيارات الخاصة بالأدمن
+  const allNavLinks = [
+    { name: "الصفحة الرئيسية", href: "/", adminOnly: false },
+    { name: "لوحة التحكم", href: "/dashboard", adminOnly: false },
+    { name: "الخريطة التفاعلية", href: "/InteractiveMap", adminOnly: false },
+    { name: "الملف الشخصي", href: "/profile", adminOnly: false },
+    { name: "المستخدمون", href: "/users", adminOnly: true }, // 👈 خاص بالأدمن فقط
+    { name: "الاشعارات", href: "/notification", adminOnly: false },
+    { name: "الاعدادات", href: "/setting", adminOnly: false },
   ];
+
+  // 🎯 تصفية الروابط بناءً على صلاحية role للمستخدم الحالي
+  const navLinks = allNavLinks.filter((link) => {
+    if (link.adminOnly) {
+      return profile?.role === "admin";
+    }
+    return true;
+  });
 
   const isRegisteredUser = user && !user.is_anonymous;
 
