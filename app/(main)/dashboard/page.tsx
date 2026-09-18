@@ -138,7 +138,10 @@ const Dashboard = () => {
                 tickLine={false} 
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} className="text-base-content" />
+              <Legend 
+                wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} 
+                formatter={(value) => <span className="text-base-content">{value}</span>}
+              />
               <Bar dataKey="sales" name="المبيعات" fill="#16a34a" radius={[4, 4, 0, 0]} />
               <Bar dataKey="profit" name="الأرباح" fill="#4ade80" radius={[4, 4, 0, 0]} />
             </BarChart>
