@@ -69,7 +69,7 @@ export default function Navbar() {
     };
   }, [supabase, fetchProfile]);
 
-  // 🚪 دالة تسجيل الخروج
+  // دالة تسجيل الخروج
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsOpen(false);

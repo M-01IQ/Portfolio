@@ -6,6 +6,30 @@ export async function proxy(request: NextRequest) {
     request,
   });
 
+  const url = request.nextUrl.clone();
+  const pathname = url.pathname;
+
+  // Define route paths
+  const authRoutes = ['/auth/login', '/auth/register', '/auth/welcome'];
+  const protectedRoutes = [
+    '/',
+    '/dashboard', 
+    '/InteractiveMap', 
+    '/users', 
+    '/notification', 
+    '/setting'
+  ];
+
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+  if (isAuthRoute || pathname === '/not-found') {
+    return supabaseResponse;
+  }
+
+  const isProtectedRoute = protectedRoutes.some((route) => {
+    if (route === '/') return pathname === '/';
+    return pathname.startsWith(route);
+  });
+
   // Get environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseKey = 
@@ -14,7 +38,6 @@ export async function proxy(request: NextRequest) {
     '';
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn(" Supabase Environment Variables are missing!");
     return supabaseResponse;
   }
 
@@ -40,42 +63,14 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  //  Get current user data
+  // Get current user data
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const url = request.nextUrl.clone();
-  const pathname = url.pathname;
-
-  // Define route paths
-  const authRoutes = ['/auth/login', '/auth/register', '/auth/welcome'];
-  
-  const protectedRoutes = [
-    '/',
-    '/dashboard', 
-    '/InteractiveMap', 
-    '/users', 
-    '/notification', 
-    '/setting'
-  ];
-
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-  
-  const isProtectedRoute = !isAuthRoute && protectedRoutes.some((route) => {
-    if (route === '/') return pathname === '/';
-    return pathname.startsWith(route);
-  });
-
   // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !user) {
     url.pathname = '/auth/welcome';
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect authenticated users away from auth routes
-  if (isAuthRoute && user) {
-    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 
@@ -91,6 +86,12 @@ export async function proxy(request: NextRequest) {
       url.pathname = '/';
       return NextResponse.redirect(url);
     }
+  }
+
+  // redirect/not-found page
+  if (!isProtectedRoute) {
+    url.pathname = '/not-found';
+    return NextResponse.rewrite(url);
   }
 
   return supabaseResponse;
