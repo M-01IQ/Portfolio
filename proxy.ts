@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
     '/',
     '/dashboard', 
     '/InteractiveMap', 
+    '/profile', 
     '/users', 
     '/notification', 
     '/setting'
