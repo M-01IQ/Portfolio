@@ -37,8 +37,8 @@ export default function Welcome() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4" dir="rtl">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md space-y-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 w-full" dir="rtl">
+      <div className="w-full max-w-3xl bg-white p-8 rounded-2xl shadow-md space-y-6 text-center">
         
         {/* Title and description */}
         <div className="space-y-2">

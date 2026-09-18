@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Aref_Ruqaa } from 'next/font/google';
+import Modal from '@/components/ui/PopUp/Modal';
+const fontType = Aref_Ruqaa({
+  subsets: ['arabic'],
+  weight: ['400', '700'],
+});
 
 export type Profile = {
   id: string;
@@ -13,7 +20,6 @@ export type Profile = {
   bio: string | null;
 };
 
-// إنشاء العميل مرة واحدة خارج نطاق المكون لمنع إعادة التهيئة في كل Render
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
@@ -23,6 +29,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [userName, setUserName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -35,8 +42,8 @@ export default function ProfilePage() {
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (authError || !user) {
-          router.push('/login');
+        if (authError || !user || user.is_anonymous) {
+          setLoading(false);
           return;
         }
 
@@ -44,7 +51,7 @@ export default function ProfilePage() {
           .from('profiles')
           .select('id, created_at, user_name, avatar_url, bio')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('خطأ أثناء جلب البروفايل:', error.message);
@@ -77,9 +84,9 @@ export default function ProfilePage() {
 
         const { error: uploadError } = await supabase.storage
           .from('profiles')
-          .upload(filePath, avatarFile, { 
+          .upload(filePath, avatarFile, {
             upsert: true,
-            contentType: avatarFile.type 
+            contentType: avatarFile.type
           });
 
         if (uploadError) throw uploadError;
@@ -115,6 +122,7 @@ export default function ProfilePage() {
 
       setIsOpen(false);
       setAvatarFile(null);
+      router.refresh();
     } catch (error: any) {
       alert('حدث خطأ أثناء التحديث: ' + error.message);
     } finally {
@@ -124,64 +132,134 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <p className="text-gray-500 font-medium">جاري التحميل...</p>
+      <div className="flex justify-center items-center min-h-screen bg-base-200">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
+  // كارد حالة الضيف
   if (!profile) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="p-6 bg-red-50 text-red-600 rounded-xl border border-red-200 dir-rtl">
-          عذراً، لم نتمكن من العثور على بيانات البروفايل الخاصة بك.
+      <div dir="rtl" className="flex justify-center items-center min-h-screen bg-base-200 p-4">
+        <div className="w-full max-w-sm bg-base-100 border border-base-200 rounded-3xl p-6 shadow-xl text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center text-warning mb-4 border border-warning/20">
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+
+          <h2 className="text-xl font-bold text-base-content mb-2">
+            وضع الزائر
+          </h2>
+          <p className="text-sm text-base-content/70 leading-relaxed mb-6 max-w-[260px]">
+            أنت تتصفح التطبيق كضيف حالياً. يرجى تسجيل الدخول لعرض وتحرير الملف الشخصي.
+          </p>
+
+          <div className="w-full space-y-2.5">
+            <Link
+              href="/auth/welcome"
+              className="btn btn-primary w-full text-sm font-medium rounded-xl flex items-center justify-center gap-2 shadow-lg"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                />
+              </svg>
+              تسجيل الدخول / إنشاء حساب
+            </Link>
+
+            <button
+              onClick={() => router.back()}
+              className="btn btn-ghost w-full text-xs rounded-xl"
+            >
+              الرجوع للصفحة السابقة
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  const avatarSrc = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.user_name || 'User')}&background=6366f1&color=fff`;
+
   return (
-    <main className="flex justify-center items-center min-h-screen bg-gray-100 p-4 dir-rtl">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-gray-200 p-6 text-right">
-        <div className="flex flex-col items-center text-center">
-          
-          <div className="relative w-28 h-28 mb-4 rounded-full overflow-hidden border-4 border-indigo-500 shadow-sm bg-gray-100">
-            <Image
-              src={profile.avatar_url || 'https://via.placeholder.com/150'}
-              alt={profile.user_name || 'User Avatar'}
-              fill
-              sizes="112px"
-              className="object-cover"
-              priority
-              unoptimized={profile.avatar_url?.startsWith('http') ? true : false}
-            />
+    <main dir="rtl" className="flex justify-center items-center min-h-screen bg-base-200 p-4">
+      {/* البطاقة الرئيسية للبروفايل */}
+      <div className="w-full max-w-sm bg-base-100 rounded-3xl shadow-xl border border-base-200 p-6">
+        <div className="flex flex-col items-center">
+          {/* زر الصورة الشخصية قابل للنقر */}
+          <button
+          onClick={() => setIsImageModalOpen(true)}
+          className="relative w-28 h-28 mb-4 rounded-full overflow-hidden border-4 border-primary shadow-sm bg-base-200 hover:opacity-90 transition-opacity cursor-pointer group"
+          title="عرض الصورة الشخصية"
+          >
+  <Image
+    src={avatarSrc}
+    alt={profile.user_name || 'User Avatar'}
+    fill
+    sizes="112px"
+    className="object-cover"
+    priority
+    unoptimized
+  />
+  {/* أيقونة المكبرة تظهر عند حوم المؤشر */}
+  <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+    </svg>
+  </div>
+</button>
+
+
+          {/* قسم اسم المستخدم */}
+          <div className="w-full text-center mb-1">
+            <h1 className={`text-2xl font-bold text-base-content ${fontType.className}`}>
+              {profile.user_name || 'مستخدم بدون اسم'}
+            </h1>
+
+            {profile.user_name && (
+              <p dir="ltr" className="text-sm font-medium text-primary mt-1 text-center">
+                @{profile.user_name}
+              </p>
+            )}
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900">
-            {profile.user_name || 'مستخدم بدون اسم'}
-          </h1>
-
-          {profile.user_name && (
-            <p className="text-sm font-medium text-indigo-600 mt-1 dir-ltr">
-              @{profile.user_name}
-            </p>
-          )}
-
           {profile.bio && (
-            <p className="mt-3 text-sm text-gray-600 leading-relaxed max-w-xs">
+            <p className="mt-3 w-full text-right text-sm text-base-content/80 leading-relaxed whitespace-pre-wrap break-words">
               {profile.bio}
             </p>
           )}
 
           <button
             onClick={() => setIsOpen(true)}
-            className="mt-5 w-full py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+            className="mt-5 w-full btn btn-primary font-medium rounded-xl"
           >
             تعديل الملف الشخصي
           </button>
 
-          <div className="mt-6 pt-4 border-t border-gray-100 w-full text-center">
-            <span className="text-xs text-gray-400">
+          <div className="mt-6 pt-4 border-t border-base-200 w-full text-center">
+            <span className="text-xs text-base-content/60">
               انضم منذ:{' '}
               {new Date(profile.created_at).toLocaleDateString('ar-EG', {
                 year: 'numeric',
@@ -190,74 +268,93 @@ export default function ProfilePage() {
               })}
             </span>
           </div>
-
         </div>
       </div>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-right shadow-xl">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">تعديل البيانات</h2>
-
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  تغيير الصورة الشخصية
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-gray-500 file:ml-2 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  اسم المستخدم
-                </label>
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="اسم المستخدم"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  النبذة (Bio)
-                </label>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  rows={3}
-                  placeholder="اكتب نبذة قصيرة عنك..."
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2 dir-rtl">
-                <button
-                  type="submit"
-                  disabled={updating}
-                  className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:bg-gray-400"
-                >
-                  {updating ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
-                >
-                  إلغاء
-                </button>
-              </div>
-            </form>
+      {/* المودل المخصص */}
+      <Modal 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+        title="تعديل البيانات"
+      >
+        <form onSubmit={handleUpdate} className="space-y-4 text-right">
+          <div>
+            <label className="block text-sm font-medium text-base-content mb-1">
+              تغيير الصورة الشخصية
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+              className="file-input file-input-bordered file-input-primary file-input-sm w-full"
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-sm font-medium text-base-content mb-1">
+              اسم المستخدم
+            </label>
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className={`input input-bordered w-full text-sm ${fontType.className}`}
+              placeholder="اسم المستخدم"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-base-content mb-1">
+              النبذة (Bio)
+            </label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              className="textarea textarea-bordered w-full text-sm leading-relaxed"
+              rows={4}
+              placeholder="اكتب نبذة قصيرة عنك..."
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="submit"
+              disabled={updating}
+              className="btn btn-primary flex-1 font-medium rounded-xl"
+            >
+              {updating ? <span className="loading loading-spinner loading-xs"></span> : 'حفظ التغييرات'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="btn btn-ghost rounded-xl"
+            >
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </Modal>
+      
+      {/* مودل عرض الصورة الشخصية بالحجم الكامل */}
+      <Modal
+      isOpen={isImageModalOpen}
+      onClose={() => setIsImageModalOpen(false)}
+      title={'الصورة الشخصية'}
+      >
+  <div className="flex flex-col items-center justify-center p-0">
+    <div className="relative w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden border-2 border-base-200 shadow-inner bg-base-200">
+      <Image
+        src={avatarSrc}
+        alt={profile.user_name || 'User Avatar'}
+        fill
+        className="object-cover"
+        unoptimized
+      />
+    </div>
+  </div>
+</Modal>
+
+      
     </main>
   );
 }

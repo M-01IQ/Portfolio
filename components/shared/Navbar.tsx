@@ -3,10 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { createClient } from "@/config/createClient";
 import { User } from "@supabase/supabase-js";
+import { Reem_Kufi } from 'next/font/google';
+
+const fontType = Reem_Kufi({
+  subsets: ['arabic'],
+  weight: ['400', '700'],
+});
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,71 +29,64 @@ export default function Navbar() {
 
   // 🔒 قفل السكرول عند فتح النافبار على الموبايل
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
+  // 🔍 دالة جلب الملف الشخصي (مستقلة)
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_name, avatar_url")
+      .eq("id", userId)
+      .single();
+
+    setProfile(data);
+  }, [supabase]);
+
   useEffect(() => {
     setMounted(true);
 
-    // 🔍 جلب بيانات المستخدم والملف الشخصي
-    const fetchUserAndProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    // الاستماع للتغييرات في حالة التسجيل (يتعامل مع الجلسة الأوليّة والتغيرات المستقبليّة)
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
 
-      if (user && !user.is_anonymous) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("user_name, avatar_url")
-          .eq("id", user.id)
-          .single();
-
-        setProfile(data);
+      if (currentUser && !currentUser.is_anonymous) {
+        await fetchProfile(currentUser.id);
       } else {
         setProfile(null);
       }
+      
       setLoadingUser(false);
-    };
-
-    fetchUserAndProfile();
-
-    // الاستماع للتغييرات في حالة التسجيل
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) setProfile(null);
-      else fetchUserAndProfile();
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase, fetchProfile]);
 
   // 🚪 دالة تسجيل الخروج
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsOpen(false);
     setProfile(null);
+    setUser(null);
     router.push('/auth/welcome');
     router.refresh();
   };
 
   // 🔗 الروابط الأساسية
   const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "dashboard", href: "/dashboard" },
-    { name: "InteractiveMap", href: "/InteractiveMap" },
-    { name: "Profile", href: "/profile" },
-    { name: "Users", href: "/users" },
-    { name: "Notification", href: "/notification" },
-    { name: "Setting", href: "/setting" },
+    { name: "الصفحة الرئيسية", href: "/" },
+    { name: "لوحة التحكم", href: "/dashboard" },
+    { name: "الخريطة التفاعلية", href: "/InteractiveMap" },
+    { name: "الملف الشخصي", href: "/profile" },
+    { name: "المستخدمون", href: "/users" },
+    { name: "الاشعارات", href: "/notification" },
+    { name: "الاعدادات", href: "/setting" },
   ];
 
   const isRegisteredUser = user && !user.is_anonymous;
@@ -101,15 +100,16 @@ export default function Navbar() {
             {/* Logo / Brand */}
             <div className="flex-shrink-0 flex items-center">
               <Link 
+                dir="rtl"
                 href="/" 
-                className="text-xl font-bold tracking-tight"
+                className={`text-xl font-bold tracking-tight ${fontType.className}`}
               >
-                𝙼𝚄𝚂𝚃𝙰𝙵𝙰<span className="text-primary">.</span>
+                مصطفى<span className="text-primary">.</span>
               </Link>
             </div>
 
             {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8 h-full">
+            <div className="hidden md:flex items-center gap-6 h-full">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -144,7 +144,6 @@ export default function Navbar() {
                 <div className="w-8 h-8" />
               )}
 
-              {/* 🔴 صورة اسم المستخدم + زر تسجيل الخروج المربع بجانبه مباشرة */}
               {!loadingUser && (
                 isRegisteredUser ? (
                   <div className="flex items-center gap-2">
@@ -218,10 +217,10 @@ export default function Navbar() {
             isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          <div className="px-4 pt-5 pb-3 space-y-1">
+          <div dir="rtl" className="px-4 pt-5 pb-3 space-y-1">
             {/* Header */}
             <div className="flex items-center justify-between pb-4 mb-2 border-b border-base-200">
-              <span className="text-lg font-bold">Menu</span>
+              <span className="text-lg font-bold">القائمة</span>
               <button 
                 type="button" 
                 onClick={() => setIsOpen(false)}
@@ -270,7 +269,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* 🔴 أسفل قائمة الموبايل: عرض صورة البروفايل وزر تسجيل الخروج المربع بجانبه */}
+          {/* أسفل قائمة الموبايل */}
           <div className="p-4 border-t border-base-200">
             {!loadingUser && (
               isRegisteredUser ? (
@@ -336,8 +335,6 @@ export default function Navbar() {
           onClick={() => setIsOpen(false)}
         />
       )}
-
-      {/* تعويض ارتفاع الـ Navbar */}
       <div className="h-16" />
     </>
   );

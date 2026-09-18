@@ -1,6 +1,6 @@
-'use client' // أضف هذا السطر فقط إذا كنت تستخدم Next.js App Router
+'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   ResponsiveContainer,
   PieChart,
@@ -17,11 +17,11 @@ import {
   Legend
 } from 'recharts'
 
-// بيانات افتراضية للرسوم البيانية
+// بيانات الرسوم البيانية
 const pieData = [
   { name: 'مكتمل', value: 400, color: '#16a34a' },
-  { name: 'قيد الانتظار', value: 300, color: '#ff9b00' },
-  { name: 'ملغي', value: 100, color: 'red' }
+  { name: 'قيد الانتظار', value: 300, color: '#f59e0b' },
+  { name: 'ملغي', value: 100, color: '#ef4444' }
 ]
 
 const lineData = [
@@ -41,14 +41,41 @@ const barData = [
   { month: 'يونيو', sales: 3800, profit: 2390 }
 ]
 
+// مكون مخصص لـ Tooltip يتفاعل مع ثيم DaisyUI
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-base-100 border border-base-300 p-2.5 rounded-lg shadow-xl text-xs text-base-content">
+        {label && <p className="font-bold mb-1 border-b border-base-200 pb-1">{label}</p>}
+        {payload.map((entry: any, index: number) => (
+          <p key={`item-${index}`} style={{ color: entry.color || entry.fill }} className="font-semibold my-0.5">
+            {`${entry.name || entry.dataKey}: ${entry.value}`}
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
 const Dashboard = () => {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return <div className="w-full h-screen bg-base-200" />
+  }
+
   return (
-    <div className="w-full h-screen bg-emerald-50 grid grid-cols-2 grid-rows-3 gap-3 p-3 font-sans" dir="rtl">
+    <div className="w-full h-screen bg-base-200 grid grid-cols-2 grid-rows-3 gap-3 p-3 font-sans" dir="rtl">
       
-      {/* المربع الأول: دائرة الإحصائيات (Donut Chart) */}
-      <div className="bg-white rounded-xl p-3 shadow-sm border border-emerald-100 flex flex-col justify-between overflow-hidden">
-        <h3 className="text-sm font-bold text-gray-700 mb-1">نسب المهام</h3>
-        <div className="w-full h-full min-h-0">
+      {/* المربع الأول: Donut Chart */}
+      <div className="bg-base-100 rounded-xl p-3 shadow-sm border border-base-300 flex flex-col justify-between overflow-hidden">
+        <h3 className="text-sm font-bold text-base-content opacity-90 mb-1">نسب المهام</h3>
+        <div className="w-full h-full min-h-0 flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -57,45 +84,63 @@ const Dashboard = () => {
                 outerRadius={55}
                 paddingAngle={5}
                 dataKey="value"
+                stroke="none"
               >
                 {pieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* المربع الثاني: رسم بياني بخطوط جانبية (Line Chart) */}
-      <div className="bg-white rounded-xl p-3 shadow-sm border border-emerald-100 flex flex-col justify-between overflow-hidden">
-        <h3 className="text-sm font-bold text-gray-700 mb-1">النشاط الأسبوعي</h3>
+      {/* المربع الثاني: Line Chart */}
+      <div className="bg-base-100 rounded-xl p-3 shadow-sm border border-base-300 flex flex-col justify-between overflow-hidden">
+        <h3 className="text-sm font-bold text-base-content opacity-90 mb-1">النشاط الأسبوعي</h3>
         <div className="w-full h-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="day" tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="val" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }} />
+            <LineChart data={lineData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-base-300" opacity={0.5} />
+              <XAxis 
+                dataKey="day" 
+                tick={{ fontSize: 10, fill: 'currentColor' }} 
+                className="text-base-content/70"
+                axisLine={false} 
+                tickLine={false} 
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Line type="monotone" dataKey="val" name="النشاط" stroke="#16a34a" strokeWidth={3} dot={{ r: 4, fill: '#16a34a' }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* المربع الثالث: أشرطة عمودية (Bar Chart) - يمتد صفين وعمودين */}
-      <div className="col-span-2 row-span-2 bg-white rounded-xl p-4 shadow-sm border border-emerald-100 flex flex-col justify-between overflow-hidden">
-        <h3 className="text-base font-bold text-gray-800 mb-2">المبيعات والأرباح الشهرية</h3>
+      {/* المربع الثالث: Bar Chart */}
+      <div className="col-span-2 row-span-2 bg-base-100 rounded-xl p-4 shadow-sm border border-base-300 flex flex-col justify-between overflow-hidden">
+        <h3 className="text-base font-bold text-base-content opacity-90 mb-2">المبيعات والأرباح الشهرية</h3>
         <div className="w-full h-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
+            <BarChart data={barData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-base-300" opacity={0.5} />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fontSize: 12, fill: 'currentColor' }} 
+                className="text-base-content/70"
+                axisLine={false} 
+                tickLine={false} 
+              />
+              <YAxis 
+                tick={{ fontSize: 11, fill: 'currentColor' }} 
+                className="text-base-content/70"
+                axisLine={false} 
+                tickLine={false} 
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} className="text-base-content" />
               <Bar dataKey="sales" name="المبيعات" fill="#16a34a" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="profit" name="الأرباح" fill="#86efac" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="profit" name="الأرباح" fill="#4ade80" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
