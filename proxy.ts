@@ -2,12 +2,17 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function proxy(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  const pathname = url.pathname;
+
+  //  تجاوز جميع مسارات الـ API وعدم تطبيق حظر أو توجيه عليها إطلاقاً
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
-
-  const url = request.nextUrl.clone();
-  const pathname = url.pathname;
 
   // Define route paths
   const authRoutes = ['/auth/login', '/auth/register', '/auth/welcome'];

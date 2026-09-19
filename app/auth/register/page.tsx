@@ -16,6 +16,30 @@ export default function Register() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Helper function to log user visit
+  const logVisit = async (userId: string) => {
+    try {
+      let sessionId = localStorage.getItem('visitor_session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem('visitor_session_id', sessionId);
+      }
+
+      await fetch('/api/log-visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          accountType: 'registered',
+          sessionId: sessionId,
+          pagePath: window.location.pathname,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to log visit:', err);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -59,6 +83,11 @@ export default function Register() {
         if (data.user && data.session === null) {
           showToast('تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتأكيد الحساب.', 'success');
         } else {
+          // 🟢 Log the visit before routing
+          if (data.user) {
+            await logVisit(data.user.id);
+          }
+
           showToast("تم إنشاء الحساب وتسجيل الدخول بنجاح", "success");
           
           setTimeout(() => {

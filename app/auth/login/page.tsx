@@ -15,7 +15,32 @@ export default function Login() {
 
   const router = useRouter();
   const supabase = createClient();
-//Login function 
+
+  // Helper function to log user visit
+  const logVisit = async (userId: string) => {
+    try {
+      let sessionId = localStorage.getItem('visitor_session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem('visitor_session_id', sessionId);
+      }
+
+      await fetch('/api/log-visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          accountType: 'registered',
+          sessionId: sessionId,
+          pagePath: window.location.pathname,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to log visit:', err);
+    }
+  };
+
+  // Login function 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -31,6 +56,11 @@ export default function Login() {
       setError(error.message);
       setLoading(false);
     } else {
+      // 🟢 Log the visit before routing
+      if (data.user) {
+        await logVisit(data.user.id);
+      }
+
       showToast("تم تسجيل الدخول بنجاح!", "success");
       router.push('/');
       router.refresh();
@@ -100,7 +130,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+          className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors cursor-pointer"
         >
           {loading ? 'جاري الدخول...' : 'دخول'}
         </button>

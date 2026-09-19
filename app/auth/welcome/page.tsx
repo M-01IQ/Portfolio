@@ -13,6 +13,30 @@ export default function Welcome() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Helper function to log guest visit
+  const logGuestVisit = async (userId?: string) => {
+    try {
+      let sessionId = localStorage.getItem('visitor_session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem('visitor_session_id', sessionId);
+      }
+
+      await fetch('/api/log-visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId || null,
+          accountType: 'guest',
+          sessionId: sessionId,
+          pagePath: window.location.pathname,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to log guest visit:', err);
+    }
+  };
+
   // Guest login function 
   const handleGuestLogin = async () => {
     setGuestLoading(true);
@@ -24,6 +48,9 @@ export default function Welcome() {
         showToast("فشل الدخول كضيف!", "error");
         console.error("Guest Auth Error:", error.message);
       } else {
+        // 🟢 Log the guest visit
+        await logGuestVisit(data.user?.id);
+
         showToast("تم الدخول كضيف بنجاح!", "success");
         router.push('/');
         router.refresh();
