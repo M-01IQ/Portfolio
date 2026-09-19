@@ -14,10 +14,8 @@ export interface ProfileData {
 
 export interface TableItem {
   id: string | number;
-  title: string;
   text?: string;
-  img_url: string;
-  section?: string;
+  media_url: string;
   user_id?: string;
   profiles?: ProfileData | ProfileData[];
 }
@@ -29,7 +27,7 @@ export interface CurrentUser {
 
 export interface CardPostProps {
   item: TableItem;
-  currentUser?: CurrentUser | null; // إضافة المستخدم الحالي
+  currentUser?: CurrentUser | null;
   onDelete?: (id: string | number) => void;
   onEdit?: (item: TableItem) => void;
 }
@@ -47,11 +45,20 @@ const getStoragePathFromUrl = (url: string): string | null => {
   return null;
 };
 
-const deleteImageFromStorage = async (url: string) => {
+const deletemediaFromStorage = async (url: string) => {
   const filePath = getStoragePathFromUrl(url);
   if (!filePath) return;
   const { error } = await supabase.storage.from("posts").remove([filePath]);
   if (error) console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
+};
+
+// دالة مساعدة للتحقق مما إذا كان الرابط يعود لفيديو
+const isVideoUrl = (url: string): boolean => {
+  if (!url) return false;
+  const videoExtensions = ["mp4", "webm", "ogg", "mov", "m4v"];
+  const cleanUrl = url.split("?")[0];
+  const extension = cleanUrl.split(".").pop()?.toLowerCase();
+  return extension ? videoExtensions.includes(extension) : false;
 };
 
 export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
@@ -62,7 +69,6 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
   const authorName = profile?.user_name || "مستخدم";
   const authorAvatar = profile?.avatar_url;
 
-  // فحص الصلاحية: هل صاحب المنشور أم Admin؟
   const isOwner = currentUser?.id && item.user_id && currentUser.id === item.user_id;
   const isAdmin = currentUser?.role === "admin";
   const canManage = Boolean(isOwner || isAdmin);
@@ -78,7 +84,7 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
             showToast("حدث خطأ أثناء الحذف من القاعدة: " + dbError.message, "error");
             return;
           }
-          if (item.img_url) await deleteImageFromStorage(item.img_url);
+          if (item.media_url) await deletemediaFromStorage(item.media_url);
           showToast("تم حذف المنشور والصورة بنجاح.", "success");
           if (onDelete) onDelete(id);
         } catch (err: any) {
@@ -88,71 +94,69 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
     );
   };
 
+  const isVideo = isVideoUrl(item.media_url);
+
   return (
     <div className="card w-full max-w-xl mx-auto bg-base-100 border border-base-300 shadow-md rounded-3xl overflow-hidden mb-6 text-right transition-all duration-300 hover:shadow-lg mt-2" dir="rtl">
-      {/* هيدر الكارت: معلومات المستخدم والدور */}
-<div className="flex items-center justify-between p-4 pb-2">
-  <div className="flex items-center gap-3">
-    <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
-      {authorAvatar ? (
-        <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover object-center" />
-      ) : (
-        <span className="text-base font-black uppercase select-none leading-none">
-          {authorName.charAt(0)}
-        </span>
-      )}
-    </div>
-    <div className="flex flex-col">
-      <span className="text-sm font-bold text-base-content leading-tight">
-        {authorName}
-      </span>
-      {item.section && (
-        <span className="badge badge-neutral badge-xs py-1 px-2 text-[10px] w-fit mt-1">
-          {item.section}
-        </span>
-      )}
-    </div>
-  </div>
-
-  {/* شارة الـ Role بدلاً من التقييم والنجمة */}
-  {profile?.role && (
-    <div
-      className={`badge font-bold text-[11px] py-2 px-3 uppercase ${
-        profile.role === "admin"
-          ? "badge-primary text-primary-content shadow-sm"
-          : "badge-ghost bg-base-200 text-base-content/70"
-      }`}
-    >
-      {profile.role}
-    </div>
-  )}
-</div>
-
-
-      {/* محتوى المنشور */}
-      <div className="py-3">
-        <div className="w-full px-4">
-          <h2 className="text-base font-bold text-base-content leading-relaxed">
-            {item.title}
-          </h2>
-        </div>
-        {item.img_url && (
-          <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
-            <img
-              src={item.img_url}
-              alt={item.title}
-              className="rounded-2xl max-h-auto object-cover w-full"
-            />
+      {/* هيدر الكارت */}
+      <div className="flex items-center justify-between p-4 pb-2">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+            {authorAvatar ? (
+              <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover object-center" />
+            ) : (
+              <span className="text-base font-black uppercase select-none leading-none">
+                {authorName.charAt(0)}
+              </span>
+            )}
           </div>
-        )}
-        {item.text && (
-          <div className="mt-3 pt-3 px-4 border-t border-base-200/60">
-            <p className="text-sm text-base-content/80">{item.text}</p>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-base-content leading-tight">
+              {authorName}
+            </span>
+          </div>
+        </div>
+        {/* admin/user role */}
+        {profile?.role && (
+          <div
+            className={`badge font-bold text-[11px] py-2 px-3 uppercase ${
+              profile.role === "admin"
+                ? "badge-primary text-primary-content shadow-sm"
+                : "badge-ghost bg-base-200 text-base-content/70"
+            }`}
+          >
+            {profile.role}
           </div>
         )}
       </div>
-
-      {/* أزرار التحكم: تظهر فقط عند وجود الصلاحية */}
+      {/*Post content */}
+      <div className="py-3">
+        {/* post text */}
+        {item.text && (
+          <div className="mt-3 pt-3 px-4 border-t border-base-200/60">
+            <p className="text-sm text-base-content/80 whitespace-pre-line">{item.text}</p>
+          </div>
+        )}
+        {/* post media */}
+        {item.media_url && (
+          <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
+            {isVideo ? (
+              <video
+                src={item.media_url}
+                controls
+                className="rounded-2xl object-cover h-full w-full"
+              />
+            ) : (
+              <img
+                src={item.media_url}
+                alt={item.text || "صورة المنشور"}
+                className="rounded-2xl object-cover h-full w-full"
+              />
+            )}
+          </div>
+        )}
+      </div>
+      {/* Admin control buttons */}
       {canManage && (
         <div className="p-4 pt-1">
           <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-1 border border-base-200 gap-1">

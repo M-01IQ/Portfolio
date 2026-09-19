@@ -12,13 +12,11 @@ export default function Posts() {
   const [filter, setFilter] = useState("");
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
-  // Modal control 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TableItem | null>(null);
 
   const supabase = createClient();
 
-  // 1. جلب بيانات المستخدم الجاري والدور (role) من جدول profiles
   const fetchCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -38,7 +36,6 @@ export default function Posts() {
     });
   };
 
-  // 2. دالة جلب المنشورات
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from("posts")
@@ -79,7 +76,7 @@ export default function Posts() {
   };
 
   const filteredPosts = posts?.filter((item) =>
-    item.title?.toLowerCase().includes(filter.toLowerCase())
+    item.text?.toLowerCase().includes(filter.toLowerCase())
   );
 
   return (
