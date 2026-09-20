@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createClient } from "@/config/createClient";
 import { useToast } from "@/components/ui/PopUp/ToastContext";
 import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
@@ -16,6 +16,7 @@ export interface TableItem {
   id: string | number;
   text?: string;
   media_url: string;
+  section?: string;
   user_id?: string;
   profiles?: ProfileData | ProfileData[];
 }
@@ -52,7 +53,6 @@ const deletemediaFromStorage = async (url: string) => {
   if (error) console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
 };
 
-// دالة مساعدة للتحقق مما إذا كان الرابط يعود لفيديو
 const isVideoUrl = (url: string): boolean => {
   if (!url) return false;
   const videoExtensions = ["mp4", "webm", "ogg", "mov", "m4v"];
@@ -60,6 +60,81 @@ const isVideoUrl = (url: string): boolean => {
   const extension = cleanUrl.split(".").pop()?.toLowerCase();
   return extension ? videoExtensions.includes(extension) : false;
 };
+
+// متغير عالمي لحفظ حالة الكتم بين جميع المكونات
+let globalMutedState = true;
+
+// مكون خاص للتحكم في تشغيل وتوقف الفيديو ومزامنة الكتم
+function SmartVideo({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isMuted, setIsMuted] = useState(globalMutedState);
+
+  useEffect(() => {
+    // الاستماع لحدث تغيير الكتم من الفيديوهات الأخرى
+    const handleGlobalMuteChange = (e: CustomEvent<boolean>) => {
+      setIsMuted(e.detail);
+      if (videoRef.current) {
+        videoRef.current.muted = e.detail;
+      }
+    };
+
+    window.addEventListener("globalMuteChange" as any, handleGlobalMuteChange);
+
+    return () => {
+      window.removeEventListener("globalMuteChange" as any, handleGlobalMuteChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            videoElement.play().catch(() => {});
+          } else {
+            videoElement.pause();
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    observer.observe(videoElement);
+
+    return () => {
+      observer.unobserve(videoElement);
+    };
+  }, []);
+
+  // التفاعل مع تغيير المستخدم لحالة الصوت في مشغل الفيديو
+  const handleVolumeChange = () => {
+    if (!videoRef.current) return;
+    const newMutedState = videoRef.current.muted;
+
+    if (newMutedState !== globalMutedState) {
+      globalMutedState = newMutedState;
+      // إرسال حدث لجميع الفيديوهات الأخرى لتحديث حالة الكتم لديهم
+      window.dispatchEvent(
+        new CustomEvent("globalMuteChange", { detail: newMutedState })
+      );
+    }
+  };
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      controls
+      muted={isMuted}
+      onVolumeChange={handleVolumeChange}
+      playsInline
+      className="rounded-2xl max-h-3xl object-cover w-full"
+    />
+  );
+}
 
 export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
   const { showToast } = useToast();
@@ -116,7 +191,7 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
             </span>
           </div>
         </div>
-        {/* admin/user role */}
+
         {profile?.role && (
           <div
             className={`badge font-bold text-[11px] py-2 px-3 uppercase ${
@@ -129,34 +204,30 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
           </div>
         )}
       </div>
-      {/*Post content */}
+
+      {/* محتوى المنشور */}
       <div className="py-3">
-        {/* post text */}
+        {item.media_url && (
+          <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
+            {isVideo ? (
+              <SmartVideo src={item.media_url} />
+            ) : (
+              <img
+                src={item.media_url}
+                alt={item.text || "صورة المنشور"}
+                className="rounded-2xl max-h-96 object-cover w-full"
+              />
+            )}
+          </div>
+        )}
         {item.text && (
           <div className="mt-3 pt-3 px-4 border-t border-base-200/60">
             <p className="text-sm text-base-content/80 whitespace-pre-line">{item.text}</p>
           </div>
         )}
-        {/* post media */}
-        {item.media_url && (
-          <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
-            {isVideo ? (
-              <video
-                src={item.media_url}
-                controls
-                className="rounded-2xl object-cover h-full w-full"
-              />
-            ) : (
-              <img
-                src={item.media_url}
-                alt={item.text || "صورة المنشور"}
-                className="rounded-2xl object-cover h-full w-full"
-              />
-            )}
-          </div>
-        )}
       </div>
-      {/* Admin control buttons */}
+
+      {/* أزرار التحكم */}
       {canManage && (
         <div className="p-4 pt-1">
           <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-1 border border-base-200 gap-1">

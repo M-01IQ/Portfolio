@@ -1,15 +1,12 @@
-/* إلغاء التنسيق العام لـ body واستبداله بكونتينر مغلق */
 .interactiveMapWrapper {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    /* استبدال الصورة بلون خلفية ثابت (رمادي فاتح هادئ) */
     background-color: #f5f7fa;
     width: 100%;
     min-height: 100vh;
     box-sizing: border-box;
 }
-
 
 .mapHeader {
     margin: 10px 0;
@@ -36,7 +33,6 @@
     height: 600px;
 }
 
-/* تخصيص الـ svg فقط داخل هذا المكون */
 .mapContainer svg {
     display: block;
     width: 100%;
