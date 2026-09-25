@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/config/createClient";
 import { TableItem } from "./CardPost";
 import { useToast } from "@/components/ui/PopUp/ToastContext";
@@ -12,8 +12,6 @@ interface PostFormModalProps {
   initialData?: TableItem | null;
   onSuccess: (item: TableItem, isEdit: boolean) => void;
 }
-
-const supabase = createClient();
 
 const getStoragePathFromUrl = (url: string): string | null => {
   if (!url) return null;
@@ -33,6 +31,8 @@ export default function PostFormModal({
   onSuccess,
 }: PostFormModalProps) {
   const { showToast } = useToast();
+  const supabase = useMemo(() => createClient(), []);
+
   const isEdit = Boolean(initialData);
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -51,78 +51,85 @@ export default function PostFormModal({
     e.preventDefault();
     setLoading(true);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    // التحقق من وجود المستخدم
-    if (userError || !user) {
-      showToast("يجب تسجيل الدخول أولاً", "error");
-      setLoading(false);
-      return;
-    }
-
-    let finalmediaUrl = initialData?.media_url || "";
-
-    if (file) {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `posts/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("posts")
-        .upload(filePath, file);
-
-      if (uploadError) {
-        showToast("فشل رفع الميديا: " + uploadError.message, "error");
+      if (userError || !user) {
+        showToast("يجب تسجيل الدخول أولاً", "error");
         setLoading(false);
         return;
       }
 
-      const { data: urlData } = supabase.storage
-        .from("posts")
-        .getPublicUrl(filePath);
+      let finalmediaUrl = initialData?.media_url || "";
 
-      if (isEdit && initialData?.media_url) {
-        const oldPath = getStoragePathFromUrl(initialData.media_url);
-        if (oldPath) await supabase.storage.from("posts").remove([oldPath]);
+      if (file) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `posts/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("posts")
+          .upload(filePath, file);
+
+        if (uploadError) {
+          showToast("فشل رفع الميديا: " + uploadError.message, "error");
+          setLoading(false);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("posts")
+          .getPublicUrl(filePath);
+
+        if (isEdit && initialData?.media_url) {
+          const oldPath = getStoragePathFromUrl(initialData.media_url);
+          if (oldPath) await supabase.storage.from("posts").remove([oldPath]);
+        }
+
+        finalmediaUrl = urlData.publicUrl;
       }
 
-      finalmediaUrl = urlData.publicUrl;
-    }
+      const payload = {
+        text,
+        media_url: finalmediaUrl,
+        user_id: user.id,
+      };
 
-    const payload = {
-      text,
-      media_url: finalmediaUrl,
-      user_id: user.id,
-    };
+      let resultData: TableItem | null = null;
+      let dbError = null;
 
-    let resultData: TableItem | null = null;
-    let dbError = null;
+      if (isEdit && initialData) {
+        const { data, error } = await supabase
+          .from("posts")
+          .update(payload)
+          .eq("id", initialData.id)
+          .select();
+        dbError = error;
+        if (data) resultData = data[0];
+      } else {
+        const { data, error } = await supabase
+          .from("posts")
+          .insert([payload])
+          .select();
+        dbError = error;
+        if (data) resultData = data[0];
+      }
 
-    if (isEdit && initialData) {
-      const { data, error } = await supabase
-        .from("posts")
-        .update(payload)
-        .eq("id", initialData.id)
-        .select();
-      dbError = error;
-      if (data) resultData = data[0];
-    } else {
-      const { data, error } = await supabase
-        .from("posts")
-        .insert([payload])
-        .select();
-      dbError = error;
-      if (data) resultData = data[0];
-    }
+      setLoading(false);
 
-    setLoading(false);
-
-    if (dbError) {
-      showToast("حدث خطأ: " + dbError.message, "error");
-    } else if (resultData) {
-      showToast(isEdit ? "تم حفظ التعديلات بنجاح!" : "تم النشر بنجاح!", "success");
-      onSuccess(resultData, isEdit);
-      onClose();
+      if (dbError) {
+        showToast("حدث خطأ: " + dbError.message, "error");
+      } else if (resultData) {
+        showToast(isEdit ? "تم حفظ التعديلات بنجاح!" : "تم النشر بنجاح!", "success");
+        onSuccess(resultData, isEdit);
+        
+        requestAnimationFrame(() => {
+          onClose();
+        });
+      }
+    } catch (err) {
+      setLoading(false);
+      showToast("حدث خطأ غير متوقع", "error");
     }
   };
 

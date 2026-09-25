@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { createClient } from "@/config/createClient";
 import CardPost, { TableItem, CurrentUser } from "./CardPost";
 import PostFormModal from "./PostFormModal";
@@ -15,47 +15,65 @@ export default function Posts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TableItem | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  const fetchCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setCurrentUser(null);
-      return;
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCurrentUser(null);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      setCurrentUser({
+        id: user.id,
+        role: profile?.role || "user",
+      });
+    } catch (err) {
+      console.error("خطأ جلب بيانات المستخدم:", err);
     }
+  }, [supabase]);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+  const fetchPosts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*, profiles(user_name, email, avatar_url, role)")
+        .order("id", { ascending: false });
 
-    setCurrentUser({
-      id: user.id,
-      role: profile?.role || "user",
-    });
-  };
-
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*, profiles(user_name, email, avatar_url, role)")
-      .order("id", { ascending: false });
-
-    if (error) {
-      console.error("خطأ جلب البيانات:", error.message);
-      setFetchError("تعذر جلب البيانات من الجدول.");
+      if (error) {
+        console.error("خطأ جلب البيانات من Supabase:", error.message);
+        setFetchError("تعذر جلب البيانات من الجدول.");
+        setPosts([]);
+      } else if (data) {
+        setPosts(data as unknown as TableItem[]);
+        setFetchError(null);
+      }
+    } catch (err) {
+      console.error("خطأ شبكة أثناء جلب المنشورات:", err);
+      setFetchError("حدث خطأ في الاتصال بالسيرفر. تحقق من الاتصال بشبكة الإنترنت.");
       setPosts([]);
-    } else if (data) {
-      setPosts(data as unknown as TableItem[]);
-      setFetchError(null);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
-    fetchCurrentUser();
-    fetchPosts();
-  }, []);
+    let isMounted = true;
+
+    if (isMounted) {
+      fetchCurrentUser();
+      fetchPosts();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchCurrentUser, fetchPosts]);
 
   const handleOpenAdd = () => {
     setEditingItem(null);
@@ -89,6 +107,7 @@ export default function Posts() {
       {/* Add button if admin */}
       {currentUser?.role === "admin" && (
         <button
+          type="button"
           className="fixed bottom-8 right-6 z-30 btn btn-primary btn-circle text-2xl shadow-xl opacity-75 hover:opacity-100 hover:scale-110 transition-all duration-300"
           onClick={handleOpenAdd}
           title="إضافة منشور جديد"

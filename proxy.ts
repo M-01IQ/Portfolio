@@ -4,9 +4,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathname = url.pathname;
-
-  //  تجاوز جميع مسارات الـ API وعدم تطبيق حظر أو توجيه عليها إطلاقاً
-  if (pathname.startsWith('/api/')) {
+  
+  // Bypass all API paths and static files
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.includes('.') 
+  ) {
     return NextResponse.next();
   }
 
@@ -94,7 +97,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // redirect/not-found page
+  // redirect/not-found page for non-protected routes
   if (!isProtectedRoute) {
     url.pathname = '/not-found';
     return NextResponse.rewrite(url);
@@ -105,6 +108,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json)$).*)',
   ],
 };

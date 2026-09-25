@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { createClient } from "@/config/createClient";
 import { useToast } from "@/components/ui/PopUp/ToastContext";
 import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
@@ -33,8 +33,6 @@ export interface CardPostProps {
   onEdit?: (item: TableItem) => void;
 }
 
-const supabase = createClient();
-
 const getStoragePathFromUrl = (url: string): string | null => {
   if (!url) return null;
   try {
@@ -46,13 +44,6 @@ const getStoragePathFromUrl = (url: string): string | null => {
   return null;
 };
 
-const deletemediaFromStorage = async (url: string) => {
-  const filePath = getStoragePathFromUrl(url);
-  if (!filePath) return;
-  const { error } = await supabase.storage.from("posts").remove([filePath]);
-  if (error) console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
-};
-
 const isVideoUrl = (url: string): boolean => {
   if (!url) return false;
   const videoExtensions = ["mp4", "webm", "ogg", "mov", "m4v"];
@@ -61,27 +52,25 @@ const isVideoUrl = (url: string): boolean => {
   return extension ? videoExtensions.includes(extension) : false;
 };
 
-// متغير عالمي لحفظ حالة الكتم بين جميع المكونات
 let globalMutedState = true;
 
-// مكون خاص للتحكم في تشغيل وتوقف الفيديو ومزامنة الكتم
 function SmartVideo({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(globalMutedState);
 
   useEffect(() => {
-    // الاستماع لحدث تغيير الكتم من الفيديوهات الأخرى
-    const handleGlobalMuteChange = (e: CustomEvent<boolean>) => {
-      setIsMuted(e.detail);
+    const handleGlobalMuteChange = (e: Event) => {
+      const customEvent = e as CustomEvent<boolean>;
+      setIsMuted(customEvent.detail);
       if (videoRef.current) {
-        videoRef.current.muted = e.detail;
+        videoRef.current.muted = customEvent.detail;
       }
     };
 
-    window.addEventListener("globalMuteChange" as any, handleGlobalMuteChange);
+    window.addEventListener("globalMuteChange", handleGlobalMuteChange);
 
     return () => {
-      window.removeEventListener("globalMuteChange" as any, handleGlobalMuteChange);
+      window.removeEventListener("globalMuteChange", handleGlobalMuteChange);
     };
   }, []);
 
@@ -109,14 +98,12 @@ function SmartVideo({ src }: { src: string }) {
     };
   }, []);
 
-  // التفاعل مع تغيير المستخدم لحالة الصوت في مشغل الفيديو
   const handleVolumeChange = () => {
     if (!videoRef.current) return;
     const newMutedState = videoRef.current.muted;
 
     if (newMutedState !== globalMutedState) {
       globalMutedState = newMutedState;
-      // إرسال حدث لجميع الفيديوهات الأخرى لتحديث حالة الكتم لديهم
       window.dispatchEvent(
         new CustomEvent("globalMuteChange", { detail: newMutedState })
       );
@@ -139,6 +126,11 @@ function SmartVideo({ src }: { src: string }) {
 export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
   const { showToast } = useToast();
   const { askConfirm } = useConfirm();
+  
+  const [like, setLike] = useState<number>(0);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+
+  const supabase = useMemo(() => createClient(), []);
 
   const profile = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
   const authorName = profile?.user_name || "مستخدم";
@@ -148,7 +140,19 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
   const isAdmin = currentUser?.role === "admin";
   const canManage = Boolean(isOwner || isAdmin);
 
+  const deletemediaFromStorage = async (url: string) => {
+    const filePath = getStoragePathFromUrl(url);
+    if (!filePath) return;
+    const { error } = await supabase.storage.from("posts").remove([filePath]);
+    if (error) console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
+  };
+
   const handleDelete = (id: string | number) => {
+    //Close interactive elements 
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     askConfirm(
       "تأكيد الحذف",
       "هل أنت متاكد من إزالة هذا المنشور وصورته نهائياً؟",
@@ -160,20 +164,30 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
             return;
           }
           if (item.media_url) await deletemediaFromStorage(item.media_url);
-          showToast("تم حذف المنشور والصورة بنجاح.", "success");
+          showToast("تم حذف المنشور وصورته بنجاح.", "success");
           if (onDelete) onDelete(id);
         } catch (err: any) {
-          showToast(err.message || "حدث خطأ غير متوقع", "error");
+          showToast(err?.message || "حدث خطأ غير متوقع", "error");
         }
       }
     );
+  };
+
+  const handleLikeToggle = () => {
+    if (isLiked) {
+      setLike((prev) => Math.max(0, prev - 1));
+      setIsLiked(false);
+    } else {
+      setLike((prev) => prev + 1);
+      setIsLiked(true);
+    }
   };
 
   const isVideo = isVideoUrl(item.media_url);
 
   return (
     <div className="card w-full max-w-xl mx-auto bg-base-100 border border-base-300 shadow-md rounded-3xl overflow-hidden mb-6 text-right transition-all duration-300 hover:shadow-lg mt-2" dir="rtl">
-      {/* هيدر الكارت */}
+      {/* Card head */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
@@ -192,21 +206,87 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
           </div>
         </div>
 
-        {profile?.role && (
-          <div
-            className={`badge font-bold text-[11px] py-2 px-3 uppercase ${
-              profile.role === "admin"
-                ? "badge-primary text-primary-content shadow-sm"
-                : "badge-ghost bg-base-200 text-base-content/70"
-            }`}
-          >
-            {profile.role}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {profile?.role && (
+            <div
+              className={`badge font-bold text-[11px] py-2 px-3 uppercase ${
+                profile.role === "admin"
+                  ? "badge-primary text-primary-content shadow-sm"
+                  : "badge-ghost bg-base-200 text-base-content/70"
+              }`}
+            >
+              {profile.role}
+            </div>
+          )}
+
+          {/* admin menu */}
+          {canManage && (
+            <div className="dropdown dropdown-left">
+              <div 
+                tabIndex={0} 
+                role="button" 
+                className="btn btn-ghost btn-circle btn-xs text-base-content/70 hover:bg-base-200"
+                aria-label="خيارات المنشور"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 stroke-current"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                  ></path>
+                </svg>
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-20 menu p-2 shadow-lg bg-base-100 rounded-box w-36 border border-base-200 text-sm gap-1"
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                      onEdit && onEdit(item);
+                    }}
+                    className="text-info font-semibold hover:bg-info/10 flex items-center justify-between"
+                  >
+                    <span>تعديل</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item.id)}
+                    className="text-error font-semibold hover:bg-error/10 flex items-center justify-between"
+                  >
+                    <span>حذف</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* محتوى المنشور */}
+      {/* post content */}
       <div className="py-3">
+        {/* Text post */}
+        {item.text && (
+          <div className="mt-3 pt-3 px-4 border-t border-base-200/60">
+            <p className="text-sm text-base-content/80 whitespace-pre-line">{item.text}</p>
+          </div>
+        )}
+
+        {/* media post */}
         {item.media_url && (
           <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
             {isVideo ? (
@@ -220,33 +300,56 @@ export default function CardPost({ item, currentUser, onDelete, onEdit }: CardPo
             )}
           </div>
         )}
-        {item.text && (
-          <div className="mt-3 pt-3 px-4 border-t border-base-200/60">
-            <p className="text-sm text-base-content/80 whitespace-pre-line">{item.text}</p>
-          </div>
-        )}
-      </div>
 
-      {/* أزرار التحكم */}
-      {canManage && (
+        {/* like & comment */}
         <div className="p-4 pt-1">
           <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-1 border border-base-200 gap-1">
             <button
-              onClick={() => onEdit && onEdit(item)}
-              className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-info hover:bg-info/10"
+              type="button"
+              onClick={handleLikeToggle}
+              className={`btn btn-ghost btn-sm flex-1 gap-2 rounded-xl transition-colors ${
+                isLiked ? "text-error hover:bg-error/10" : "text-base-content/70 hover:bg-base-300/50"
+              }`}
+              aria-label="إعجاب"
             >
-              <span className="text-xs font-bold">تعديل</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill={isLiked ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5 transition-transform active:scale-125"
+              >
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
+              {like > 0 && <span className="text-xs font-bold">{like}</span>}
             </button>
+
             <div className="w-[1px] h-5 bg-base-300" />
+
             <button
-              onClick={() => handleDelete(item.id)}
-              className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-error hover:bg-error/10"
+              type="button"
+              className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-base-content/70 hover:bg-base-300/50"
+              aria-label="تعليق"
             >
-              <span className="text-xs font-bold">حذف</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
+              >
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+              </svg>
             </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
