@@ -72,10 +72,14 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Get current user data
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Get current user data safely
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    user = null;
+  }
 
   // Redirect unauthenticated users trying to access protected routes
   if (isProtectedRoute && !user) {

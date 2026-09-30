@@ -15,9 +15,21 @@ export async function POST(req: Request) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const validUserId = (userId && userId !== 'guest' && userId !== '') ? userId : null;
 
-    // تنفيذ الإدخال دون الحاجة لجلب البيانات المدخلة (.select) لتسريع العملية
+    let validUserId = null;
+
+    if (userId && typeof userId === 'string' && userId !== 'guest') {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile) {
+        validUserId = userId;
+      }
+    }
+
     const { error } = await supabase
       .from('analytics_log')
       .insert([
@@ -31,11 +43,10 @@ export async function POST(req: Request) {
       ]);
 
     if (error) {
-      // إرجاع الخطأ فقط في حال فشل الإدخال
+      console.error('Analytics Insert Error:', error.message);
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
 
-    // عند النجاح، نرجع استجابة فارغة أو مؤشر بسيط بدون تفاصيل
     return NextResponse.json({ success: true });
 
   } catch (err) {

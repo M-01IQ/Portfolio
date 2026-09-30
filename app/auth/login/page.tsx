@@ -46,6 +46,9 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
+    // 🟢 تنظيف الجلسات القديمة لمنع خطأ refresh_token_not_found
+    await supabase.auth.signOut();
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -56,9 +59,9 @@ export default function Login() {
       setError(error.message);
       setLoading(false);
     } else {
-      // 🟢 Log the visit before routing
-      if (data.user) {
-        await logVisit(data.user.id);
+      // 🟢 إرسال سجل الزيارة في الخلفية دون انتظار لسرعة التوجيه
+      if (data.user?.id) {
+        logVisit(data.user.id);
       }
 
       showToast("تم تسجيل الدخول بنجاح!", "success");
