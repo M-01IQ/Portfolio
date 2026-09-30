@@ -66,7 +66,6 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
     return src.includes("#t=") ? src : `${src}#t=0.001`;
   }, [src, shouldRender]);
 
-  // مزامنة حالة كتم الصوت عبر كل العناصر
   useEffect(() => {
     const handleGlobalMuteChange = (e: Event) => {
       const customEvent = e as CustomEvent<boolean>;
@@ -80,7 +79,6 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
     return () => window.removeEventListener("globalMuteChange", handleGlobalMuteChange);
   }, []);
 
-  // الاستماع لحدث تشغيل فيديو آخر لإيقاف الفيديو الحالي في الديسكتوب
   useEffect(() => {
     const handleOtherVideoPlay = (e: Event) => {
       const customEvent = e as CustomEvent<HTMLVideoElement>;
@@ -93,7 +91,6 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
     return () => window.removeEventListener("globalVideoPlay", handleOtherVideoPlay);
   }, []);
 
-  // التحكم بإيقاف وتشغيل الفيديو بناءً على التمرير (IntersectionObserver)
   useEffect(() => {
     if (!shouldRender) return;
 
@@ -107,18 +104,15 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
           const isMobile = window.innerWidth < 768;
 
           if (entry.isIntersecting) {
-            // تشغيل تلقائي فقط للهواتف المحمولة
             if (isMobile) {
               const playPromise = videoElement.play();
               if (playPromise !== undefined) {
                 playPromise.catch(() => {});
               }
             } else {
-              // الشاشات الكبيرة: يتوقف الفيديو تلقائياً حتى يقوم المستخدم بتشغيله بنفسه
               videoElement.pause();
             }
           } else {
-            // عند التمرير للخارج: إيقاف آمن وفوري للفيديو
             videoElement.pause();
             setIsExpanded(false);
           }
@@ -143,7 +137,6 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
   };
 
   const handlePlay = () => {
-    // إرسال تنبيه لكافة الفيديوهات الأخرى عند بدء التشغيل
     if (videoRef.current) {
       window.dispatchEvent(
         new CustomEvent("globalVideoPlay", { detail: videoRef.current })
@@ -179,7 +172,6 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
           : "aspect-[4/5] max-h-[500px] overflow-hidden"
       }`}
     >
-      {/* زر التكبير والتصغير */}
       <button
         type="button"
         onClick={toggleExpand}
@@ -187,12 +179,14 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
         title={isExpanded ? "تصغير" : "تكبير"}
       >
         {isExpanded ? (
-        <svg xmlns="http://w3.org" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" /></svg>
-          ) : (
-          <svg xmlns="http://w3.org" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-            )}
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
       </button>
 
       {!isLoaded && (
@@ -272,6 +266,59 @@ function SmartImage({ src, alt, shouldRender }: { src: string; alt: string; shou
               : "h-full object-cover object-center"
           } ${isLoaded ? "opacity-100" : "opacity-0"}`}
         />
+      )}
+    </div>
+  );
+}
+
+function ExpandableText({ text, limit = 150, cardRef }: { text: string; limit?: number; cardRef: React.RefObject<HTMLDivElement | null> }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!text) return null;
+
+  const isLongText = text.length > limit;
+  const displayText = isExpanded || !isLongText ? text : `${text.slice(0, limit)}...`;
+
+  const handleToggle = () => {
+    if (!isLongText) return;
+
+    if (isExpanded && cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const isCardAboveViewport = rect.top < 0;
+
+      setIsExpanded(false);
+
+      if (isCardAboveViewport) {
+        requestAnimationFrame(() => {
+          cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    } else {
+      setIsExpanded(true);
+    }
+  };
+
+  return (
+    <div className="mt-1 pt-2 px-4 border-t border-base-200/60">
+      <p
+        onClick={handleToggle}
+        className={`text-sm text-base-content/80 whitespace-pre-line leading-relaxed ${
+          isLongText ? "cursor-pointer" : ""
+        }`}
+      >
+        {displayText}
+      </p>
+      {isLongText && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggle();
+          }}
+          className="text-xs font-bold text-primary hover:underline mt-1 inline-block cursor-pointer focus:outline-none"
+        >
+          {isExpanded ? "عرض أقل" : "قراءة المزيد"}
+        </button>
       )}
     </div>
   );
@@ -370,7 +417,6 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
       dir="rtl"
     >
       <div>
-        {/* Header */}
         <div className="flex items-center justify-between p-4 pb-2">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
@@ -459,13 +505,8 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
           </div>
         </div>
 
-        {/* Content */}
         <div className="py-2">
-          {item.text && (
-            <div className="mt-1 pt-2 px-4 border-t border-base-200/60">
-              <p className="text-sm text-base-content/80 whitespace-pre-line">{item.text}</p>
-            </div>
-          )}
+          {item.text && <ExpandableText text={item.text} limit={150} cardRef={cardRef} />}
 
           {item.media_url && (
             <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center px-4">
@@ -479,7 +520,6 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
         </div>
       </div>
 
-      {/* Action bar */}
       <div className="p-4 pt-1">
         <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-3 border border-base-200 gap-1">
           <button
