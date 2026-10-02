@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, useRef, ReactNode } from "react";
 
-// 1. تحديد الأنواع (Types) للبيانات
+// Data type selection 
 export type ToastType = "success" | "error";
 
 interface ToastState {
@@ -15,7 +15,7 @@ interface ToastContextType {
   showToast: (msg: string, type?: ToastType) => void;
 }
 
-// 2. إنشاء الـ Context مع نوع البيانات المخصص
+// Create Context with custom data type 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 interface ToastProviderProps {
@@ -28,8 +28,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     msg: "",
     type: "success",
   });
-
-  // استخدام useRef لتخزين الموقت لمنع التداخل عند استدعاء التوست عدة مرات متتالية
+// Use the timer
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showToast = (msg: string, type: ToastType = "success") => {
@@ -47,8 +46,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-
-      {/* ===== تصميم التنبيه (Toast UI) ===== */}
+      {/*  Toast UI Design */} 
       <div dir="rtl"
         className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ease-in-out ${
           toast.show
@@ -63,7 +61,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
               : "bg-red-500/10 border-red-400/60 text-red-500"
           }`}
         >
-          {/* الأيقونة */}
+          {/* Icon */} 
           <div
             className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
               toast.type === "success" ? "bg-emerald-500/30" : "bg-red-500/30"
@@ -72,7 +70,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
             {toast.type === "success" ? "✓" : "✕"}
           </div>
 
-          {/* النص */}
+          {/* text */}
           <span className="text-sm font-semibold whitespace-nowrap">
             {toast.msg}
           </span>
@@ -82,7 +80,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   );
 };
 
-// 3. Custom Hook مع التحقق من الأخطاء في TypeScript
+// Error checking 
 export const useToast = (): ToastContextType => {
   const context = useContext(ToastContext);
   if (!context) {

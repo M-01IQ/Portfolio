@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { createClient } from "@/config/createClient";
 import CardPost, { TableItem, CurrentUser } from "./CardPost";
 import PostFormModal from "./PostFormModal";
+import { useToast } from "@/components/ui/PopUp/ToastContext";
 import { PostSkeleton } from "@/components/ui/Loading/PostSkeleton";
 
 export default function Posts() {
+  const { showToast } = useToast();
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [posts, setPosts] = useState<TableItem[] | null>(null);
   const [filter, setFilter] = useState("");
@@ -41,6 +43,7 @@ export default function Posts() {
   }, [supabase]);
 
   const fetchPosts = useCallback(async () => {
+    setFetchError(null); // إعادة تعيين الخطأ قبل بدء عملية الجلب
     try {
       const { data, error } = await supabase
         .from("posts")
@@ -48,31 +51,26 @@ export default function Posts() {
         .order("id", { ascending: false });
 
       if (error) {
-        console.error("خطأ جلب البيانات من Supabase:", error.message);
-        setFetchError("تعذر جلب البيانات من الجدول.");
+        console.error("خطأ جلب المنشورات:", error.message);
+        const errorMsg = "تعذر جلب المنشورات: " + error.message;
+        setFetchError(errorMsg);
+        showToast(errorMsg, "error");
         setPosts([]);
       } else if (data) {
         setPosts(data as unknown as TableItem[]);
-        setFetchError(null);
       }
     } catch (err) {
       console.error("خطأ شبكة أثناء جلب المنشورات:", err);
-      setFetchError("حدث خطأ في الاتصال بالسيرفر. تحقق من الاتصال بشبكة الإنترنت.");
+      const networkMsg = "حدث خطأ في الاتصال. تحقق من الاتصال بشبكة الإنترنت.";
+      setFetchError(networkMsg);
+      showToast(networkMsg, "error");
       setPosts([]);
     }
-  }, [supabase]);
+  }, [supabase, showToast]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    if (isMounted) {
-      fetchCurrentUser();
-      fetchPosts();
-    }
-
-    return () => {
-      isMounted = false;
-    };
+    fetchCurrentUser();
+    fetchPosts();
   }, [fetchCurrentUser, fetchPosts]);
 
   const handleOpenAdd = () => {
@@ -93,9 +91,13 @@ export default function Posts() {
     setPosts((prev) => (prev ? prev.filter((item) => item.id !== id) : []));
   };
 
-  const filteredPosts = posts?.filter((item) =>
-    item.text?.toLowerCase().includes(filter.toLowerCase())
-  );
+  // تحسين التصفية باستخدام useMemo
+  const filteredPosts = useMemo(() => {
+    if (!posts) return [];
+    return posts.filter((item) =>
+      item.text?.toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [posts, filter]);
 
   return (
     <div className="relative min-h-screen max-w-7xl mx-auto pt-4" dir="rtl">
@@ -140,15 +142,15 @@ export default function Posts() {
       )}
 
       {/* Empty State */}
-      {filteredPosts && filteredPosts.length === 0 && posts && (
+      {posts && filteredPosts.length === 0 && (
         <p className="text-center text-base-content/60 py-8">
           {filter ? "لا توجد نتائج تطابق بحثك." : "لا توجد منشورات لعرضها حالياً."}
         </p>
       )}
 
       {/* Render Posts Grid */}
-      {filteredPosts && filteredPosts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-3">
+      {filteredPosts.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPosts.map((item) => (
             <CardPost
               key={item.id}

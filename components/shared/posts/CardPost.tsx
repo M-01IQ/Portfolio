@@ -16,7 +16,6 @@ export interface TableItem {
   id: string | number;
   text?: string;
   media_url: string;
-  section?: string;
   user_id?: string;
   profiles?: ProfileData | ProfileData[];
 }
@@ -370,7 +369,7 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
     const filePath = getStoragePathFromUrl(url);
     if (!filePath) return;
     const { error } = await supabase.storage.from("posts").remove([filePath]);
-    if (error) console.error("خطأ أثناء حذف الصورة من الـ Storage:", error.message);
+    if (error) console.error("خطأ أثناء حذف الصورة:", error.message);
   };
 
   const handleDelete = (id: string | number) => {
@@ -380,16 +379,16 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
 
     askConfirm(
       "تأكيد الحذف",
-      "هل أنت متاكد من إزالة هذا المنشور وصورته نهائياً؟",
+      "هل أنت متاكد من إزالة هذا المنشور ؟",
       async () => {
         try {
           const { error: dbError } = await supabase.from("posts").delete().eq("id", id);
           if (dbError) {
-            showToast("حدث خطأ أثناء الحذف من القاعدة: " + dbError.message, "error");
+            showToast("حدث خطأ أثناء الحذف" + dbError.message, "error");
             return;
           }
           if (item.media_url) await deletemediaFromStorage(item.media_url);
-          showToast("تم حذف المنشور وصورته بنجاح.", "success");
+          showToast("تم حذف المنشور بنجاح.", "success");
           if (onDelete) onDelete(id);
         } catch (err: any) {
           showToast(err?.message || "حدث خطأ غير متوقع", "error");
@@ -417,6 +416,7 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
       dir="rtl"
     >
       <div>
+        {/* card header */}
         <div className="flex items-center justify-between p-4 pb-2">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-full bg-primary/10 text-primary ring-2 ring-primary/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
@@ -504,12 +504,12 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
             )}
           </div>
         </div>
-
+        {/* card body */}
         <div className="py-2">
           {item.text && <ExpandableText text={item.text} limit={150} cardRef={cardRef} />}
 
           {item.media_url && (
-            <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center px-4">
+            <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
               {isVideo ? (
                 <SmartVideo src={item.media_url} shouldRender={shouldRenderMedia} />
               ) : (
@@ -519,7 +519,7 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
           )}
         </div>
       </div>
-
+      {/*  Card feet */}
       <div className="p-4 pt-1">
         <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-3 border border-base-200 gap-1">
           <button
