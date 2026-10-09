@@ -8,40 +8,66 @@ import PostFormModal from "./PostFormModal";
 interface PostsClientProps {
   initialPosts: TableItem[];
   currentUser: CurrentUser | null;
+  onRevalidate: () => Promise<void>;
 }
 
-export default function PostsClient({ initialPosts, currentUser }: PostsClientProps) {
+export default function PostsClient({ initialPosts, currentUser, onRevalidate }: PostsClientProps) {
   const router = useRouter();
   const [posts, setPosts] = useState<TableItem[]>(initialPosts);
   const [filter, setFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TableItem | null>(null);
 
-  // Safely sync posts when initialPosts change from server
+  // Synchronize internal state with incoming initialPosts prop updates
   useEffect(() => {
     setPosts(initialPosts);
   }, [initialPosts]);
 
+  // Open modal in create mode
   const handleOpenAdd = () => {
     setEditingItem(null);
     setIsModalOpen(true);
   };
 
+  // Open modal in edit mode with selected post data
   const handleOpenEdit = (item: TableItem) => {
     setEditingItem(item);
     setIsModalOpen(true);
   };
 
+  // Remove deleted post locally from state
   const handleDeleteItem = (id: string | number) => {
     setPosts((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Safely close modal and refresh state to prevent browser pointer capture race conditions
+  const handleFormSuccess = () => {
+    requestAnimationFrame(() => {
+      setIsModalOpen(false);
+      setTimeout(async () => {
+        await onRevalidate();
+        router.refresh();
+      }, 50);
+    });
+  };
+
+  // Safely close modal without triggering revalidation
+  const handleCloseModal = () => {
+    requestAnimationFrame(() => {
+      setIsModalOpen(false);
+    });
+  };
+
+  // Filter posts based on user search input
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
     return posts.filter((item) =>
       item.text?.toLowerCase().includes(filter.toLowerCase())
     );
   }, [posts, filter]);
+
+  // Check if current user has administrative permissions
+  const isAdmin = currentUser?.role === "admin" || currentUser?.role === "SUPER_ADMIN";
 
   return (
     <div className="relative min-h-screen max-w-7xl mx-auto pt-4" dir="rtl">
@@ -50,11 +76,11 @@ export default function PostsClient({ initialPosts, currentUser }: PostsClientPr
         <h1 className="text-2xl font-bold">المنشورات</h1>
       </div>
 
-      {/* Add button for Admin */}
-      {currentUser?.role === "admin" && (
+      {/* Floating Action Button strictly for admin users */}
+      {isAdmin && (
         <button
           type="button"
-          className="fixed bottom-8 right-6 z-30 btn btn-primary btn-circle text-2xl shadow-xl opacity-75 hover:opacity-100 hover:scale-110 transition-all duration-300"
+          className="fixed bottom-8 right-6 z-30 btn btn-primary btn-circle text-2xl shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center"
           onClick={handleOpenAdd}
           title="إضافة منشور جديد"
         >
@@ -62,9 +88,9 @@ export default function PostsClient({ initialPosts, currentUser }: PostsClientPr
         </button>
       )}
 
-      {/* Filter Input */}
+      {/* Search Filter Input */}
       <div className="mb-6 flex items-center">
-        <input 
+        <input
           type="text"
           placeholder="ابحث..."
           value={filter}
@@ -73,14 +99,14 @@ export default function PostsClient({ initialPosts, currentUser }: PostsClientPr
         />
       </div>
 
-      {/* Empty State */}
+      {/* Empty State View */}
       {filteredPosts.length === 0 && (
         <p className="text-center text-base-content/60 py-8">
           {filter ? "لا توجد نتائج تطابق بحثك." : "لا توجد منشورات لعرضها حالياً."}
         </p>
       )}
 
-      {/* Posts Grid */}
+      {/* Posts List Grid */}
       {filteredPosts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPosts.map((item) => (
@@ -95,15 +121,12 @@ export default function PostsClient({ initialPosts, currentUser }: PostsClientPr
         </div>
       )}
 
-      {/* Add and Edit Modal */}
+      {/* Post Modal Component */}
       <PostFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         initialData={editingItem}
-        onSuccess={() => {
-          setIsModalOpen(false);
-          router.refresh();
-        }}
+        onSuccess={handleFormSuccess}
       />
     </div>
   );

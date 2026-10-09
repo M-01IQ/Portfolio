@@ -1,11 +1,23 @@
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Data fetch function 
+// Fetch posts
 export async function getPostsData(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select(`
+      id,
+      created_at,
+      text,
+      media_url,
+      user_id,
+      profiles (
+        id,
+        user_name,
+        avatar_url,
+        role
+      )
+    `)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -16,12 +28,10 @@ export async function getPostsData(supabase: SupabaseClient) {
   return data;
 }
 
-// The cache function stores and retrieves data
+// Cache handler function
 export const getCachedPostsForUser = (userId: string, fetcher: () => Promise<any>) =>
   unstable_cache(
-    async () => {
-      return fetcher();
-    },
+    async () => fetcher(),
     ["posts-list", userId],
-    { revalidate: 60, tags: ["posts"] }
+    { revalidate: false, tags: ["posts"] }
   )();
