@@ -45,8 +45,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    // 🟢 تنظيف الجلسات القديمة لمنع خطأ refresh_token_not_found
+    // Clean up old sessions to prevent the refresh_token_not_found error 
     await supabase.auth.signOut();
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -59,7 +58,7 @@ export default function Login() {
       setError(error.message);
       setLoading(false);
     } else {
-      // 🟢 إرسال سجل الزيارة في الخلفية دون انتظار لسرعة التوجيه
+      // Sending visit log in backend
       if (data.user?.id) {
         logVisit(data.user.id);
       }

@@ -25,24 +25,31 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4 overflow-hidden" dir="rtl">
-      {/* Prevent background touching */}
+      {/* Background overlay */}
       <div 
         className="fixed inset-0 bg-black/40 transition-all cursor-pointer" 
         onClick={onClose}
       />
 
-      {/* Model box */}
-      <div className="relative z-50 w-full max-w-lg bg-base-100 rounded-3xl p-6 shadow-2xl border border-base-200">
+      {/* Modal box */}
+      <div className="relative z-50 w-full max-w-lg bg-base-100 rounded-3xl shadow-2xl border border-base-200 overflow-hidden flex flex-col">
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="btn btn-sm btn-circle btn-ghost absolute left-4 top-4"
+          className="btn btn-sm btn-circle btn-ghost absolute left-3 top-3 z-10 bg-base-100/50 backdrop-blur-sm"
         >
           ✕
         </button>
 
-        {title && <h3 className="text-lg font-bold mb-4">{title}</h3>}
+        {/* Title (if present) */}
+        {title && (
+          <div className="p-6 pb-0">
+            <h3 className="text-lg font-bold">{title}</h3>
+          </div>
+        )}
 
-        <div className="mt-2">{children}</div>
+        {/* Content wrapper */}
+        <div className="w-full h-full">{children}</div>
       </div>
     </div>
   );

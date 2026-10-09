@@ -57,21 +57,18 @@ export default function InteractiveMap() {
 
     d3.json(WORLD_TOPOJSON_URL).then((data: any) => {
       const worldCountries = topojson.feature(data, data.objects.countries) as any;
-
-      // 1. استخراج باقي دول الشرق الأوسط المستقلة
+      // Extracting the rest of the Middle East countries 
       const otherCountries = worldCountries.features.filter((d: any) =>
         SELECTED_COUNTRIES.includes(d.properties.name) && d.properties.name !== "Palestine"
       );
-
-      // 2. دمج أراضي فلسطين والأراضي المحتلة في مجسم جغرافي واحد (Merged Feature)
+      // Merged Feature of Palestinian Territories 
       const palestineGeometries = data.objects.countries.geometries.filter((g: any) =>
         g.properties && (g.properties.name === "Palestine" || g.properties.name === "Israel")
       );
 
       const palestineMerged = topojson.merge(data, palestineGeometries) as any;
       palestineMerged.properties = { name: "Palestine" };
-
-      // 3. تجميع كافة المساحات
+      // All spaces are collected 
       const middleEastCountries = [...otherCountries, palestineMerged];
 
       projection.fitSize([internalWidth, internalHeight], {
@@ -133,7 +130,7 @@ export default function InteractiveMap() {
       title: `لا يوجد فيديو مخصص لـ ${countryName}`,
       src: "/default.mp4",
       type: "video/mp4",
-      desc: `لا يوجد ملف فيديو مخصص لهذه الدولة حاليًا.`
+      desc: `لا يوجد فيديو مخصص لهذه الدولة حاليًا.`
     };
   };
 
@@ -148,7 +145,7 @@ export default function InteractiveMap() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
-          {/* حاوية الخريطة */}
+          {/* Map container */} 
           <div 
             ref={containerRef}
             className="lg:col-span-2 bg-white rounded-2xl p-4 shadow-md border border-slate-200 relative overflow-hidden"
@@ -168,8 +165,7 @@ export default function InteractiveMap() {
               </div>
             )}
           </div>
-
-          {/* القائمة الجانبية والفيديو */}
+          {/* Side menu and video */} 
           <div className="bg-white rounded-2xl p-5 shadow-md border border-slate-200 flex flex-col gap-4">
             <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">
               {currentVideo ? currentVideo.title : 'معلومات الدولة'}

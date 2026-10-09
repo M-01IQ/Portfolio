@@ -59,7 +59,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-base-200 text-base-content p-6" dir="rtl">
       <div className="max-w-4xl mx-auto">
-        {/* العنوان */}
+        {/* title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
             الإعدادات
@@ -70,7 +70,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
-          {/* الشريط الجانبي */}
+          {/* Sidebar */} 
           <div className="md:w-64 flex-shrink-0">
             <nav className="bg-base-100 rounded-2xl shadow-sm overflow-hidden border border-base-300">
               {tabs.map(tab => (
@@ -90,10 +90,10 @@ export default function SettingsPage() {
             </nav>
           </div>
 
-          {/* المحتوى */}
+          {/* Content  */}
           <div className="flex-1">
             <div className="bg-base-100 border border-base-300 rounded-2xl shadow-sm p-6">
-              {/* تبويب عام */}
+              {/* General Tab */} 
               {activeTab === 'general' && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-4">
@@ -154,7 +154,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* تبويب الإشعارات */}
+              {/* Notifications tab */} 
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-4">
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* تبويب الأمان */}
+              {/* Security tab */} 
               {activeTab === 'security' && (
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold mb-4">
@@ -244,9 +244,9 @@ export default function SettingsPage() {
                           onChange={() => setTheme(theme === "dark" ? "light" : "dark")}
                           checked={theme === "dark"}
                         />
-                        {/* أيقونة الشمس */}
+                        {/* Sun icon */} 
                         <svg className="swap-on fill-current w-6 h-6" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,0,1.41l.71.71A1,1,0,0,0,7.76,7.76L7.05,7.05A1,1,0,0,0,5.64,7.05Zm12.02,12a1,1,0,0,0,1.41,0l.71-.71a1,1,0,0,0-1.41-1.41l-.71.71A1,1,0,0,0,17.66,19.05ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-7,7a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V19A1,1,0,0,0,14,18ZM12,6a6,6,0,1,0,6,6A6,6,0,0,0,12,6Z"/></svg>
-                        {/* أيقونة القمر */}
+                        {/* Moon icon */} 
                         <svg className="swap-off fill-current w-6 h-6" viewBox="0 0 24 24"><path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Z"/></svg>
                       </label>
                     ) : (
@@ -269,7 +269,7 @@ export default function SettingsPage() {
                 </div>
               )}
               
-              {/* زر الحفظ */}
+              {/* save button */}
               <div className="mt-8 pt-6 border-t border-base-300 flex items-center gap-4">
                 <button
                   onClick={handleSave}

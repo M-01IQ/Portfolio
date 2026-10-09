@@ -83,7 +83,7 @@ export default function Register() {
         if (data.user && data.session === null) {
           showToast('تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتأكيد الحساب.', 'success');
         } else {
-          // 🟢 Log the visit before routing
+          // Log the visit before routing
           if (data.user) {
             await logVisit(data.user.id);
           }

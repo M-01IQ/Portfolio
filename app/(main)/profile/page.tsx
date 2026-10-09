@@ -138,7 +138,7 @@ export default function ProfilePage() {
     );
   }
 
-  // كارد حالة الضيف
+// Guest Status Card 
   if (!profile) {
     return (
       <div dir="rtl" className="flex justify-center items-center min-h-screen bg-base-200 p-4">
@@ -205,16 +205,16 @@ export default function ProfilePage() {
 
   return (
     <main dir="rtl" className="flex justify-center items-center min-h-screen bg-base-200 p-4">
-      {/* البطاقة الرئيسية للبروفايل */}
+      {/* Main Profile Card */} 
       <div className="w-full max-w-sm bg-base-100 rounded-3xl shadow-xl border border-base-200 p-6">
         <div className="flex flex-col items-center">
-          {/* زر الصورة الشخصية قابل للنقر */}
+          {/* Profile picture button is clickable */} 
           <button
           onClick={() => setIsImageModalOpen(true)}
           className="relative w-28 h-28 mb-4 rounded-full overflow-hidden border-4 border-primary shadow-sm bg-base-200 hover:opacity-90 transition-opacity cursor-pointer group"
           title="عرض الصورة الشخصية"
           >
-  <Image
+          <Image
     src={avatarSrc}
     alt={profile.user_name || 'User Avatar'}
     fill
@@ -223,16 +223,14 @@ export default function ProfilePage() {
     priority
     unoptimized
   />
-  {/* أيقونة المكبرة تظهر عند حوم المؤشر */}
-  <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-    </svg>
-  </div>
-</button>
-
-
-          {/* قسم اسم المستخدم */}
+          {/* The magnifying glass icon appears when the cursor hovers */}
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+            </svg>
+          </div>
+        </button>
+          {/* Username section */} 
           <div className="w-full text-center mb-1">
             <h1 className={`text-2xl font-bold text-base-content ${fontType.className}`}>
               {profile.user_name || 'مستخدم بدون اسم'}
@@ -270,8 +268,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-
-      {/* المودل المخصص */}
+      {/* Profile Editing Model */} 
       <Modal 
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
@@ -334,27 +331,22 @@ export default function ProfilePage() {
           </div>
         </form>
       </Modal>
-      
-      {/* مودل عرض الصورة الشخصية بالحجم الكامل */}
+      {/* Profile Picture Preview Model */}
       <Modal
       isOpen={isImageModalOpen}
       onClose={() => setIsImageModalOpen(false)}
-      title={'الصورة الشخصية'}
-      >
-  <div className="flex flex-col items-center justify-center p-0">
-    <div className="relative w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden border-2 border-base-200 shadow-inner bg-base-200">
-      <Image
-        src={avatarSrc}
-        alt={profile.user_name || 'User Avatar'}
-        fill
-        className="object-cover"
-        unoptimized
-      />
-    </div>
-  </div>
-</Modal>
-
-      
+      title={''}>
+        <div className="w-full flex justify-center">
+          <div className="relative w-full aspect-square max-h-[70vh] rounded-2xl overflow-hidden border-2 border-base-200 shadow-inner bg-base-200">
+            <Image
+            src={avatarSrc}
+            alt={profile.user_name || 'User Avatar'}
+            fill
+            className="object-cover"
+            unoptimized/>
+          </div>
+        </div>
+      </Modal>
     </main>
   );
 }

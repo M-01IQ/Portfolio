@@ -20,7 +20,6 @@ import {
   Legend,
 } from 'recharts';
 
-// Tooltip مخصص يتكيف مع الثيم
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -140,8 +139,8 @@ export default function AdminDashboardPage() {
   }, []);
 
   const pieData = [
-    { name: 'حسابات مسجلة', value: registeredCount, color: '#3b82f6' }, // أزرق واضح
-    { name: 'ضيوف', value: guestCount, color: '#f59e0b' },             // أصفر/برتقالي واضح
+    { name: 'حسابات مسجلة', value: registeredCount, color: '#3b82f6' },
+    { name: 'ضيوف', value: guestCount, color: '#f59e0b' },
   ];
 
   if (!isMounted || loading) {
@@ -156,13 +155,13 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-base-200 p-6 space-y-6" dir="rtl">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* العناوين */}
+        {/* Title */}
         <div>
           <h1 className="text-2xl font-bold text-base-content">احصائيات المستخدمين</h1>
           <p className="text-sm text-base-content/60">نظرة عامة على الزيارات وحركة تسجيل الدخول للموقع</p>
         </div>
 
-        {/* كروت الإحصائيات الرئيسية */}
+       {/* statistics cards  */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="card bg-base-100 shadow-sm border border-base-300 p-6 space-y-2">
             <span className="text-sm font-medium text-base-content/60">إجمالي الزيارات</span>
@@ -179,11 +178,10 @@ export default function AdminDashboardPage() {
             <div className="text-3xl font-extrabold text-warning">{guestCount}</div>
           </div>
         </div>
-
-        {/* الرسوم البيانية */}
+        {/* Graphs */} 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* توزيع الزوار (Pie Chart) */}
+          {/* Pie Chart*/}
           <div className="card bg-base-100 shadow-sm border border-base-300 p-5 flex flex-col justify-between h-72">
             <h3 className="text-sm font-bold text-base-content mb-2">توزيع الزوار حسب نوع الحساب</h3>
             <div className="w-full h-full min-h-0">
@@ -208,7 +206,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* النشاط الأسبوعي (Line Chart) */}
+          {/* Line Chart */}
           <div className="card bg-base-100 shadow-sm border border-base-300 p-5 flex flex-col justify-between h-72">
             <h3 className="text-sm font-bold text-base-content mb-2">نشاط الزيارات الأسبوعي الحقيقي</h3>
             <div className="w-full h-full min-h-0">
@@ -232,7 +230,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* النمو الشهري الحقيقي (Bar Chart) */}
+          {/* Bar Chart */}
           <div className="md:col-span-2 card bg-base-100 shadow-sm border border-base-300 p-5 flex flex-col justify-between h-80">
             <h3 className="text-base font-bold text-base-content mb-2">توزيع الزيارات الشهرية بناءً على السجلات الفعلية</h3>
             <div className="w-full h-full min-h-0">
@@ -252,7 +250,7 @@ export default function AdminDashboardPage() {
 
         </div>
 
-        {/* جدول أحدث تسجيلات الدخول */}
+        {/* Login statistics table     */}
         <div className="card bg-base-100 shadow-sm border border-base-300 p-6 space-y-4">
           <h2 className="text-lg font-bold text-base-content">أحدث عمليات الدخول والتصفح</h2>
           

@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import "./(main)/globals.css";
 import { ToastProvider } from "@/components/ui/PopUp/ToastContext";
 import { ConfirmProvider } from "@/components/ui/PopUp/ConfirmContext";

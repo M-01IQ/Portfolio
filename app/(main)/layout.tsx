@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import "./globals.css";
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";

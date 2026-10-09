@@ -234,7 +234,7 @@ export default function UserSupa() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="btn btn-ghost w-full"
+                  className="btn btn-error btn-ghost w-full"
                 >
                   إلغاء 
                 </button>
@@ -251,7 +251,7 @@ export default function UserSupa() {
             key={item.id} 
             className="w-full bg-base-100 rounded-xl border border-base-300 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
           >
-            {/* الصورة والمعلومات */}
+            {/* Information */} 
             <div className="flex items-center gap-4 w-full sm:w-auto">
               <div className="relative w-14 h-14 rounded-full overflow-hidden border border-base-300 shrink-0 bg-base-200 flex items-center justify-center">
                 {item.avatar_url ? (

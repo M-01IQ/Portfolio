@@ -18,7 +18,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // 1. تحديث الـ state ليشمل حقل role
+  // Update profile state to include the role field
   const [profile, setProfile] = useState<{ user_name: string | null; avatar_url: string | null; role: string | null } | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
@@ -29,7 +29,7 @@ export default function Navbar() {
 
   const supabase = createClient();
 
-  // 🔒 قفل السكرول عند فتح النافبار على الموبايل
+  // Lock scroll when mobile navigation drawer is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
@@ -37,11 +37,11 @@ export default function Navbar() {
     };
   }, [isOpen]);
 
-  // 🔍 دالة جلب الملف الشخصي (تم إضافة role للاستعلام)
+  // Fetch user profile including the role column
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("user_name, avatar_url, role") // 👈 إضافة role هنا
+      .select("user_name, avatar_url, role")
       .eq("id", userId)
       .single();
 
@@ -69,7 +69,7 @@ export default function Navbar() {
     };
   }, [supabase, fetchProfile]);
 
-  // دالة تسجيل الخروج
+  // Handle user sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsOpen(false);
@@ -79,18 +79,18 @@ export default function Navbar() {
     router.refresh();
   };
 
-  // 🔗 قائمة الروابط الكاملة مع تحديد الخيارات الخاصة بالأدمن
+  // List of all navigation links with admin restriction flags
   const allNavLinks = [
     { name: "الصفحة الرئيسية", href: "/", adminOnly: false },
     { name: "لوحة التحكم", href: "/dashboard", adminOnly: false },
     { name: "الخريطة التفاعلية", href: "/InteractiveMap", adminOnly: false },
     { name: "الملف الشخصي", href: "/profile", adminOnly: false },
-    { name: "المستخدمون", href: "/users", adminOnly: true }, // 👈 خاص بالأدمن فقط
+    { name: "المستخدمون", href: "/users", adminOnly: true },
     { name: "الاشعارات", href: "/notification", adminOnly: false },
     { name: "الاعدادات", href: "/setting", adminOnly: false },
   ];
 
-  // 🎯 تصفية الروابط بناءً على صلاحية role للمستخدم الحالي
+  // Filter navigation links based on user role
   const navLinks = allNavLinks.filter((link) => {
     if (link.adminOnly) {
       return profile?.role === "admin";
@@ -278,7 +278,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* أسفل قائمة الموبايل */}
+          {/* Mobile Menu Footer */}
           <div className="p-4 border-t border-base-200">
             {!loadingUser && (
               isRegisteredUser ? (

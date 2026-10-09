@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
-// 1. تحديد الأنواع (Types)
+// Types
 interface ConfirmConfig {
   show: boolean;
   title: string;
@@ -14,7 +14,7 @@ interface ConfirmContextType {
   askConfirm: (title: string, msg: string, callback: () => void) => void;
 }
 
-// 2. إنشاء الـ Context
+//createـ Context
 const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 
 interface ConfirmProviderProps {
@@ -39,8 +39,8 @@ export const ConfirmProvider: React.FC<ConfirmProviderProps> = ({ children }) =>
       title,
       msg,
       onConfirm: () => {
-        callback(); // تنفيذ العملية المطلوبة
-        closeConfirm(); // إغلاق النافذة
+        callback();
+        closeConfirm(); 
       },
     });
   };
@@ -48,20 +48,19 @@ export const ConfirmProvider: React.FC<ConfirmProviderProps> = ({ children }) =>
   return (
     <ConfirmContext.Provider value={{ askConfirm }}>
       {children}
-
-      {/* ===== نافذة التأكيد (Modal UI) ===== */}
+      {/* Confirmation window (Modal UI)*/}
       <div
         className={`fixed inset-0 z-[10000] flex items-center justify-center p-4 transition-all duration-300 ${
           config.show ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         }`}
       >
-        {/* الخلفية المظلمة */}
+        {/* Background blurring */} 
         <div
           className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={closeConfirm}
         />
 
-        {/* جسم النافذة */}
+        {/* Window Body */} 
         <div dir="rtl"
           className={`relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 transition-all duration-300 transform ${
             config.show ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
@@ -95,8 +94,7 @@ export const ConfirmProvider: React.FC<ConfirmProviderProps> = ({ children }) =>
     </ConfirmContext.Provider>
   );
 };
-
-// 3. Custom Hook لاستخدام النافذة مع حماية ضد الاستدعاء الخاطئ
+// False summons 
 export const useConfirm = (): ConfirmContextType => {
   const context = useContext(ConfirmContext);
   if (!context) {

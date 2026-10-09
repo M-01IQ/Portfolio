@@ -48,7 +48,7 @@ export default function Welcome() {
         showToast("فشل الدخول كضيف!", "error");
         console.error("Guest Auth Error:", error.message);
       } else {
-        // 🟢 Log the guest visit
+        // Log the guest visit
         await logGuestVisit(data.user?.id);
 
         showToast("تم الدخول كضيف بنجاح!", "success");
