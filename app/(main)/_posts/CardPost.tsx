@@ -23,7 +23,10 @@ export interface TableItem {
 export interface CurrentUser {
   id: string;
   role?: string;
+  user_name?: string;
+  avatar_url?: string;
 }
+
 
 export interface CardPostProps {
   item: TableItem;

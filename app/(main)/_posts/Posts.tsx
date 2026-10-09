@@ -13,7 +13,7 @@ export default async function Posts() {
   const userId = user?.id || "guest";
 
   const initialPosts = await getCachedPostsForUser(userId, () =>
-    getPostsData(supabase)
+    getPostsData(supabase, userId)
   );
 
   let currentUser = null;
@@ -32,10 +32,10 @@ export default async function Posts() {
     };
   }
 
-  // Server Action Cash out upon posting 
+  // Server Action with updated revalidateTag behavior
   async function handleRevalidate() {
     "use server";
-    revalidateTag("posts");
+    revalidateTag("posts", "max");
     revalidatePath("/posts");
   }
 
