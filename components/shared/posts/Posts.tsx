@@ -43,7 +43,7 @@ export default function Posts() {
   }, [supabase]);
 
   const fetchPosts = useCallback(async () => {
-    setFetchError(null); // إعادة تعيين الخطأ قبل بدء عملية الجلب
+    setFetchError(null);
     try {
       const { data, error } = await supabase
         .from("posts")
