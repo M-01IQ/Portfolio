@@ -3,6 +3,14 @@ import { getCachedPostsForUser, getPostsData } from "./fetchpost";
 import { createServerClientInstance } from "@/config/createClientServer";
 import PostsClient from "./PostsClient";
 
+export interface CurrentUser {
+  id: string;
+  role?: string;
+  user_name?: string;
+  avatar_url?: string;
+  is_anonymous?: boolean;
+}
+
 export default async function Posts() {
   const supabase = await createServerClientInstance();
 
@@ -12,7 +20,7 @@ export default async function Posts() {
 
   const userId = user?.id || "guest";
   
-  let currentUser = null;
+  let currentUser: CurrentUser | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -29,7 +37,6 @@ export default async function Posts() {
     };
   }
 
-// Using cash 
   const initialPosts = await getCachedPostsForUser(userId, () =>
     getPostsData(supabase, userId, currentUser?.is_anonymous)
   );
