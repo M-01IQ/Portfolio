@@ -1,4 +1,4 @@
-import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { getPostsData } from "./fetchpost";
 import { createServerClientInstance } from "@/config/createClientServer";
 import PostsClient from "./PostsClient";
@@ -39,19 +39,12 @@ export default async function Posts() {
     };
   }
 
-  // Cache posts data for better performance using unstable_cache inline
-  const getCachedPosts = unstable_cache(
-    async () => getPostsData(supabase, userId, currentUser?.is_anonymous),
-    [`posts-v3-${userId}`],
-    { revalidate: 60, tags: ["posts"] }
-  );
+  // Direct fetch without complex cache wrappers to eliminate TypeScript build errors permanently
+  const initialPosts = await getPostsData(supabase, userId, currentUser?.is_anonymous);
 
-  const initialPosts = await getCachedPosts();
-
-  // Revalidate cache on server actions
+  // Revalidate path on server actions
   async function handleRevalidate() {
     "use server";
-    revalidateTag("posts");
     revalidatePath("/posts");
   }
 

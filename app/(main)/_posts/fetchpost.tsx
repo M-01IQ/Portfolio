@@ -28,14 +28,12 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
 
   if (!posts || posts.length === 0) return [];
 
-  // Return posts without like status if user is guest or anonymous
   if (!userId || userId === "guest" || isAnonymous) {
     return posts.map((post) => ({ ...post, user_has_liked: false }));
   }
 
   const postIds = posts.map((p) => p.id);
   
-  // Fetch user likes for the retrieved posts
   const { data: userLikes } = await supabase
     .from("likes")
     .select("post_id")
