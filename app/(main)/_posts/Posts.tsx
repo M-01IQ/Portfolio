@@ -1,5 +1,5 @@
 import { revalidateTag, revalidatePath } from "next/cache";
-import { getCachedPostsForUser, getPostsData } from "./fetchpost";
+import { fetchAndCachePosts, getPostsData } from "./fetchpost";
 import { createServerClientInstance } from "@/config/createClientServer";
 import PostsClient from "./PostsClient";
 
@@ -37,7 +37,7 @@ export default async function Posts() {
     };
   }
 
-  const initialPosts = await getCachedPostsForUser(userId, async () =>
+  const initialPosts = await fetchAndCachePosts(userId, async () =>
     getPostsData(supabase, userId, currentUser?.is_anonymous)
   );
 

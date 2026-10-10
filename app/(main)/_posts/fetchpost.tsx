@@ -48,10 +48,11 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
   }));
 }
 
-export const getCachedPostsForUser = (userId: string, fetcher: () => Promise<any>) =>
+// استخدام اسم جديد كلياً لتجاوز الذاكرة المؤقتة القديمة في فيرسل
+export const fetchAndCachePosts = (userId: string, fetcher: () => Promise<any>) =>
   unstable_cache(
     fetcher,
-    ["posts-list", userId],
+    ["posts-cache-v2", userId],
     { 
       revalidate: 60, 
       tags: ["posts"] 
