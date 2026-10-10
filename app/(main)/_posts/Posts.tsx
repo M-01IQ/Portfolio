@@ -11,10 +11,7 @@ export default async function Posts() {
   } = await supabase.auth.getUser();
 
   const userId = user?.id || "guest";
-  const initialPosts = await getCachedPostsForUser(userId, () =>
-    getPostsData(supabase)
-  );
-
+  
   let currentUser = null;
   if (user) {
     const { data: profile } = await supabase
@@ -28,13 +25,19 @@ export default async function Posts() {
       role: profile?.role || "user",
       user_name: profile?.user_name,
       avatar_url: profile?.avatar_url,
+      is_anonymous: user.is_anonymous || false,
     };
   }
+
+// Using cash 
+  const initialPosts = await getCachedPostsForUser(userId, () =>
+    getPostsData(supabase, userId, currentUser?.is_anonymous)
+  );
 
   // Server Action
   async function handleRevalidate() {
     "use server";
-    revalidateTag("posts", "max");
+    revalidateTag("posts");
     revalidatePath("/posts");
   }
 

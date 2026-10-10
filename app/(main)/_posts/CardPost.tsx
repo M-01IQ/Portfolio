@@ -17,6 +17,8 @@ export interface TableItem {
   text?: string;
   media_url: string;
   user_id?: string;
+  likes_count?: number; 
+  user_has_liked?: boolean;
   profiles?: ProfileData | ProfileData[];
 }
 
@@ -25,8 +27,8 @@ export interface CurrentUser {
   role?: string;
   user_name?: string;
   avatar_url?: string;
+  is_anonymous?: boolean;
 }
-
 
 export interface CardPostProps {
   item: TableItem;
@@ -333,8 +335,9 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
   const { showToast } = useToast();
   const { askConfirm } = useConfirm();
   
-  const [like, setLike] = useState<number>(0);
-  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [likeCount, setLikeCount] = useState<number>(item.likes_count || 0);
+  const [isLiked, setIsLiked] = useState<boolean>(item.user_has_liked || false);
+  const [isLiking, setIsLiking] = useState<boolean>(false);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -400,13 +403,44 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
     );
   };
 
-  const handleLikeToggle = () => {
-    if (isLiked) {
-      setLike((prev) => Math.max(0, prev - 1));
-      setIsLiked(false);
-    } else {
-      setLike((prev) => prev + 1);
-      setIsLiked(true);
+  // Function for handling likes
+  const handleLikeToggle = async () => {
+    if (!currentUser || !currentUser.id || currentUser.id === "guest" || currentUser.is_anonymous) {
+      showToast("يجب تسجيل الدخول اولا", "error");
+      return;
+    }
+
+    if (isLiking) return;
+    setIsLiking(true);
+
+    const previousIsLiked = isLiked;
+    const previousLikeCount = likeCount;
+
+    setIsLiked(!previousIsLiked);
+    setLikeCount((prev) => (previousIsLiked ? Math.max(0, prev - 1) : prev + 1));
+
+    try {
+      if (previousIsLiked) {
+        const { error } = await supabase
+          .from("likes")
+          .delete()
+          .eq("post_id", item.id)
+          .eq("user_id", currentUser.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("likes")
+          .insert({ post_id: item.id, user_id: currentUser.id });
+
+        if (error) throw error;
+      }
+    } catch (err: any) {
+
+      setIsLiked(previousIsLiked);
+      setLikeCount(previousLikeCount);
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -522,12 +556,13 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
           )}
         </div>
       </div>
-      {/*  Card feet */}
+      {/* Card feet */}
       <div className="p-4 pt-1">
         <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-3 border border-base-200 gap-1">
           <button
             type="button"
             onClick={handleLikeToggle}
+            disabled={isLiking}
             className={`btn btn-ghost btn-sm flex-1 gap-2 rounded-xl transition-colors ${
               isLiked ? "text-error hover:bg-error/10" : "text-base-content/70 hover:bg-base-300/50"
             }`}
@@ -545,7 +580,7 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
             >
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
             </svg>
-            {like > 0 && <span className="text-xs font-bold">{like}</span>}
+            {likeCount > 0 && <span className="text-xs font-bold">{likeCount}</span>}
           </button>
 
           <div className="w-[1px] h-5 bg-base-300" />
