@@ -37,7 +37,6 @@ export default async function Posts() {
     };
   }
 
-  // استدعاء الكاش بالوسيطين المطلوبين تماماً
   const initialPosts = await getCachedPostsForUser(userId, async () =>
     getPostsData(supabase, userId, currentUser?.is_anonymous)
   );

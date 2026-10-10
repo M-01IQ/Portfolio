@@ -48,11 +48,10 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
   }));
 }
 
-// دالة الكاش مع تحديد الأنواع بدقة لتجنب أي خطأ في عدد الوسائط
 export const getCachedPostsForUser = (userId: string, fetcher: () => Promise<any>) =>
   unstable_cache(
     fetcher,
-    [`posts-list-${userId}`],
+    ["posts-list", userId],
     { 
       revalidate: 60, 
       tags: ["posts"] 
