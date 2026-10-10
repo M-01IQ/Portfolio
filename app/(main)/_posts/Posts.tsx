@@ -20,7 +20,6 @@ export default async function Posts() {
 
   const userId = user?.id || "guest";
   
-  // Fetch user profile and authentication status
   let currentUser: CurrentUser | null = null;
   if (user) {
     const { data: profile } = await supabase
@@ -38,12 +37,11 @@ export default async function Posts() {
     };
   }
 
-  // Fetch cached posts data passing user identifier and fetcher callback
-  const initialPosts = await getCachedPostsForUser(userId, () =>
+  // استدعاء الكاش بالوسيطين المطلوبين تماماً
+  const initialPosts = await getCachedPostsForUser(userId, async () =>
     getPostsData(supabase, userId, currentUser?.is_anonymous)
   );
 
-  // Revalidate cache and paths on server actions
   async function handleRevalidate() {
     "use server";
     revalidateTag("posts");

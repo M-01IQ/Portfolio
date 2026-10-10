@@ -1,7 +1,6 @@
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Fetch posts optimized and lightweight to prevent lag
 export async function getPostsData(supabase: SupabaseClient, userId?: string, isAnonymous?: boolean) {
   const { data: posts, error } = await supabase
     .from("posts")
@@ -49,7 +48,7 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
   }));
 }
 
-// Fixed cache wrapper accepting single execution or matching arguments
+// دالة الكاش مع تحديد الأنواع بدقة لتجنب أي خطأ في عدد الوسائط
 export const getCachedPostsForUser = (userId: string, fetcher: () => Promise<any>) =>
   unstable_cache(
     fetcher,
