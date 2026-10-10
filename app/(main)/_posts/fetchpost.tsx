@@ -1,6 +1,6 @@
-import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+// Fetch posts optimized and lightweight from Supabase database
 export async function getPostsData(supabase: SupabaseClient, userId?: string, isAnonymous?: boolean) {
   const { data: posts, error } = await supabase
     .from("posts")
@@ -28,12 +28,14 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
 
   if (!posts || posts.length === 0) return [];
 
+  // Return posts without like status if user is guest or anonymous
   if (!userId || userId === "guest" || isAnonymous) {
     return posts.map((post) => ({ ...post, user_has_liked: false }));
   }
 
   const postIds = posts.map((p) => p.id);
   
+  // Fetch user likes for the retrieved posts
   const { data: userLikes } = await supabase
     .from("likes")
     .select("post_id")
@@ -47,14 +49,3 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
     user_has_liked: likedPostIds.has(post.id),
   }));
 }
-
-// استخدام اسم جديد كلياً لتجاوز الذاكرة المؤقتة القديمة في فيرسل
-export const fetchAndCachePosts = (userId: string, fetcher: () => Promise<any>) =>
-  unstable_cache(
-    fetcher,
-    ["posts-cache-v2", userId],
-    { 
-      revalidate: 60, 
-      tags: ["posts"] 
-    }
-  )();
