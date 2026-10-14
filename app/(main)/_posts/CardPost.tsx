@@ -204,6 +204,7 @@ function SmartVideo({ src, shouldRender }: { src: string; shouldRender: boolean 
           poster={videoSrc}
           preload="metadata"
           controls
+          loop
           muted={isMuted}
           onPlay={handlePlay}
           onLoadedMetadata={() => setIsLoaded(true)}
