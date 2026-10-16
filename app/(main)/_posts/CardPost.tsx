@@ -48,6 +48,33 @@ const getStoragePathFromUrl = (url: string): string | null => {
   return null;
 };
 
+const renderTextWithLinks = (text: string) => {
+  if (!text) return null;
+
+// Regular expression (Regex) for searching HTTP/HTTPS links 
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          dir="ltr"
+          onClick={(e) => e.stopPropagation()}
+          className="text-primary underline hover:opacity-80 break-all"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 const isVideoUrl = (url: string): boolean => {
   if (!url) return false;
   const videoExtensions = ["mp4", "webm", "ogg", "mov", "m4v"];
@@ -305,14 +332,14 @@ function ExpandableText({ text, limit = 150, cardRef }: { text: string; limit?: 
 
   return (
     <div className="mt-1 pt-2 px-4 border-t border-base-200/60">
-      <p
+      <div
         onClick={handleToggle}
         className={`text-sm text-base-content/80 whitespace-pre-line leading-relaxed ${
           isLongText ? "cursor-pointer" : ""
         }`}
       >
-        {displayText}
-      </p>
+        {renderTextWithLinks(displayText)}
+      </div>
       {isLongText && (
         <button
           type="button"
