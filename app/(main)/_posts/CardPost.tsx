@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { createClient } from "@/config/createClient";
 import { useToast } from "@/components/ui/PopUp/ToastContext";
 import { useConfirm } from "@/components/ui/PopUp/ConfirmContext";
+import PostCommentsSection from "./PostCommentsSection";
 
 export interface ProfileData {
   user_name?: string;
@@ -19,6 +20,7 @@ export interface TableItem {
   user_id?: string;
   likes_count?: number; 
   user_has_liked?: boolean;
+  comments_count?: number;
   profiles?: ProfileData | ProfileData[];
 }
 
@@ -35,6 +37,8 @@ export interface CardPostProps {
   currentUser?: CurrentUser | null;
   onDelete?: (id: string | number) => void;
   onEdit?: (item: TableItem) => void;
+  isCommentsOpen?: boolean;
+  onToggleComments?: () => void;
 }
 
 const getStoragePathFromUrl = (url: string): string | null => {
@@ -51,7 +55,6 @@ const getStoragePathFromUrl = (url: string): string | null => {
 const renderTextWithLinks = (text: string) => {
   if (!text) return null;
 
-// Regular expression (Regex) for searching HTTP/HTTPS links 
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
 
@@ -65,7 +68,7 @@ const renderTextWithLinks = (text: string) => {
           rel="noopener noreferrer"
           dir="ltr"
           onClick={(e) => e.stopPropagation()}
-          className="text-primary underline hover:opacity-80 break-all"
+          className="text-primary underline hover:opacity-80 break-all inline-block"
         >
           {part}
         </a>
@@ -356,7 +359,7 @@ function ExpandableText({ text, limit = 150, cardRef }: { text: string; limit?: 
   );
 }
 
-function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
+function CardPost({ item, currentUser, onDelete, onEdit, isCommentsOpen = false, onToggleComments }: CardPostProps) {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [shouldRenderMedia, setShouldRenderMedia] = useState(false);
 
@@ -366,6 +369,18 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
   const [likeCount, setLikeCount] = useState<number>(item.likes_count || 0);
   const [isLiked, setIsLiked] = useState<boolean>(item.user_has_liked || false);
   const [isLiking, setIsLiking] = useState<boolean>(false);
+
+  // استخدام حالة داخلية احتياطية في حال لم يتم تمرير الخصائص من الأب
+  const [internalCommentsOpen, setInternalCommentsOpen] = useState<boolean>(false);
+  const commentsOpenState = onToggleComments ? isCommentsOpen : internalCommentsOpen;
+
+  const handleCommentsClick = () => {
+    if (onToggleComments) {
+      onToggleComments();
+    } else {
+      setInternalCommentsOpen((prev) => !prev);
+    }
+  };
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -381,13 +396,10 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
           observer.disconnect();
         }
       },
-      {
-        rootMargin: "800px 0px 800px 0px", 
-      }
+      { rootMargin: "800px 0px 800px 0px" }
     );
 
     observer.observe(el);
-
     return () => observer.disconnect();
   }, []);
 
@@ -431,7 +443,6 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
     );
   };
 
-  // Function for handling likes
   const handleLikeToggle = async () => {
     if (!currentUser || !currentUser.id || currentUser.id === "guest" || currentUser.is_anonymous) {
       showToast("يجب تسجيل الدخول اولا", "error");
@@ -464,7 +475,6 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
         if (error) throw error;
       }
     } catch (err: any) {
-
       setIsLiked(previousIsLiked);
       setLikeCount(previousLikeCount);
     } finally {
@@ -515,53 +525,20 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
 
             {canManage && (
               <div className="dropdown dropdown-left">
-                <div 
-                  tabIndex={0} 
-                  role="button" 
-                  className="btn btn-ghost btn-circle btn-xs text-base-content/70 hover:bg-base-200"
-                  aria-label="خيارات المنشور"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    className="w-5 h-5 stroke-current"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    ></path>
+                <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-xs text-base-content/70 hover:bg-base-200" aria-label="خيارات المنشور">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-5 h-5 stroke-current">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                   </svg>
                 </div>
-                <ul
-                  tabIndex={0}
-                  className="dropdown-content z-20 menu p-2 shadow-lg bg-base-100 rounded-box w-36 border border-base-200 text-sm gap-1"
-                >
+                <ul tabIndex={0} className="dropdown-content z-20 menu p-2 shadow-lg bg-base-100 rounded-box w-36 border border-base-200 text-sm gap-1">
                   <li>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-                        onEdit && onEdit(item);
-                      }}
-                      className="text-info font-semibold hover:bg-info/10 flex items-center justify-between"
-                    >
+                    <button type="button" onClick={() => { document.activeElement instanceof HTMLElement && document.activeElement.blur(); onEdit && onEdit(item); }} className="text-info font-semibold hover:bg-info/10 flex items-center justify-between">
                       <span>تعديل</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                   </li>
                   <li>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item.id)}
-                      className="text-error font-semibold hover:bg-error/10 flex items-center justify-between"
-                    >
+                    <button type="button" onClick={() => handleDelete(item.id)} className="text-error font-semibold hover:bg-error/10 flex items-center justify-between">
                       <span>حذف</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
                   </li>
                 </ul>
@@ -569,10 +546,10 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
             )}
           </div>
         </div>
+
         {/* card body */}
         <div className="py-2">
           {item.text && <ExpandableText text={item.text} limit={150} cardRef={cardRef} />}
-
           {item.media_url && (
             <div className="mt-3 pt-3 border-t border-base-200/60 flex justify-center">
               {isVideo ? (
@@ -584,6 +561,7 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
           )}
         </div>
       </div>
+
       {/* Card feet */}
       <div className="p-4 pt-1">
         <div className="flex items-center justify-between bg-base-200/50 rounded-2xl p-1 mt-3 border border-base-200 gap-1">
@@ -596,16 +574,7 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
             }`}
             aria-label="إعجاب"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill={isLiked ? "currentColor" : "none"}
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 transition-transform active:scale-125"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 transition-transform active:scale-125">
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
             </svg>
             {likeCount > 0 && <span className="text-xs font-bold">{likeCount}</span>}
@@ -614,24 +583,30 @@ function CardPost({ item, currentUser, onDelete, onEdit }: CardPostProps) {
           <div className="w-[1px] h-5 bg-base-300" />
 
           <button
-            type="button"
-            className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-base-content/70 hover:bg-base-300/50"
-            aria-label="تعليق"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5"
-            >
-              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-            </svg>
-          </button>
+  type="button"
+  onClick={handleCommentsClick}
+  className="btn btn-ghost btn-sm flex-1 gap-2 rounded-xl text-base-content/70 hover:bg-base-300/50"
+  aria-label="تعليق"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+  </svg>
+  <span className="text-xs font-bold">
+  {` ${item.comments_count ?? 0}`}
+</span>
+
+</button>
+
         </div>
+
+        {/* Show comments below the card */} 
+        {commentsOpenState && (
+          <PostCommentsSection
+            postId={item.id}
+            currentUser={currentUser}
+            onClose={handleCommentsClick}
+          />
+        )}
       </div>
     </div>
   );

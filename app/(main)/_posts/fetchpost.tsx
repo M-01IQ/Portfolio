@@ -10,6 +10,7 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
       text,
       media_url,
       likes_count,
+      comments_count,
       user_id,
       profiles (
         id,
@@ -22,7 +23,7 @@ export async function getPostsData(supabase: SupabaseClient, userId?: string, is
     .limit(30);
 
   if (error) {
-    console.error("Error fetching posts:", error);
+    console.error("Error fetching posts:", JSON.stringify(error, null, 2));
     return [];
   }
 

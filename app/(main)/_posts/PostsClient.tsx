@@ -18,6 +18,8 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TableItem | null>(null);
 
+  const [openCommentsPostId, setOpenCommentsPostId] = useState<string | number | null>(null);
+
   // Synchronize internal state with incoming initialPosts prop updates
   useEffect(() => {
     setPosts(initialPosts);
@@ -116,6 +118,10 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
               currentUser={currentUser}
               onDelete={handleDeleteItem}
               onEdit={handleOpenEdit}
+              isCommentsOpen={openCommentsPostId === item.id}
+              onToggleComments={() =>
+                setOpenCommentsPostId(openCommentsPostId === item.id ? null : item.id)
+              }
             />
           ))}
         </div>
