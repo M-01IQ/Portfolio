@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Aref_Ruqaa } from 'next/font/google';
 import Modal from '@/components/ui/PopUp/Modal';
 import EditProfileModal from './EditProfileModal';
-import { Profile } from '@/types/profile';
+import { Profile } from './type_profile';
 
 const fontType = Aref_Ruqaa({
   subsets: ['arabic'],
@@ -110,16 +110,17 @@ export default function ProfilePage() {
 
       if (updateError) throw updateError;
 
-      setProfile((prev) =>
-        prev
-          ? {
-              ...prev,
-              user_name: userName,
-              bio: bio,
-              avatar_url: newAvatarUrl,
-            }
-          : null
-      );
+      setProfile((prev: Profile | null) =>
+      prev
+      ? {
+        ...prev,
+        user_name: userName,
+        bio: bio,
+        avatar_url: newAvatarUrl,
+      }
+    : null
+  );
+
 
       setIsEditOpen(false);
       router.refresh();

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Modal from '@/components/ui/PopUp/Modal';
-import { Profile } from '@/types/profile';
+import { Profile } from './type_profile';
 
 interface EditProfileModalProps {
   isOpen: boolean;
