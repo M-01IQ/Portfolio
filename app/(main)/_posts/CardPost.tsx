@@ -419,12 +419,12 @@ function CardPost({ item, currentUser, onDelete, onEdit, isCommentsOpen = false,
                 <ul tabIndex={0} className="dropdown-content z-20 menu p-2 shadow-lg bg-base-100 rounded-box w-36 border border-base-200 text-sm gap-1">
                   <li>
                     <button type="button" onClick={() => onEdit?.(item)} className="text-info font-semibold hover:bg-info/10">
-                      Edit
+                      تعديل
                     </button>
                   </li>
                   <li>
                     <button type="button" onClick={() => handleDelete(item.id)} className="text-error font-semibold hover:bg-error/10">
-                      Delete
+                      حذف
                     </button>
                   </li>
                 </ul>
