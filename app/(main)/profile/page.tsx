@@ -139,7 +139,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!profile) {
+    if (!profile) {
     return (
       <div dir="rtl" className="flex justify-center items-center min-h-screen bg-base-200 p-4">
         <div className="w-full max-w-sm bg-base-100 border border-base-200 rounded-3xl p-6 shadow-xl text-center flex flex-col items-center">
@@ -153,15 +153,18 @@ export default function ProfilePage() {
             أنت تتصفح التطبيق كضيف حالياً. يرجى تسجيل الدخول لعرض وتحرير الملف الشخصي.
           </p>
           <div className="w-full space-y-2.5">
-            <Link
-              href="/auth/welcome"
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace('/auth/welcome');
+              }}
               className="btn btn-primary w-full text-sm font-medium rounded-xl flex items-center justify-center gap-2 shadow-lg"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
               تسجيل الدخول / إنشاء حساب
-            </Link>
+            </button>
             <button onClick={() => router.back()} className="btn btn-ghost w-full text-xs rounded-xl">
               الرجوع للصفحة السابقة
             </button>
