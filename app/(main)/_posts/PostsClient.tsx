@@ -99,6 +99,9 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
           className="input input-bordered w-full max-w-md mx-3"
           onChange={(e) => setFilter(e.target.value)}
         />
+        <button className="btn btn-error w-1/5 text-base-content"
+        onClick={()=>setFilter("")}
+        >اعادة التعيين</button>
       </div>
 
       {/* Empty State View */}

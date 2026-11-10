@@ -78,6 +78,15 @@ export default function Navbar() {
     router.push('/auth/welcome');
     router.refresh();
   };
+  // Sign out the anonymous (guest) session first, then go to the welcome page
+  const handleGuestLogin = async () => {
+  await supabase.auth.signOut();
+  setIsOpen(false);
+  setProfile(null);
+  setUser(null);
+  router.replace('/auth/welcome');
+  router.refresh();
+};
 
   // List of all navigation links with admin restriction flags
   const allNavLinks = [
@@ -190,13 +199,13 @@ export default function Navbar() {
                     </button>
                   </div>
                 ) : (
-                  <Link 
-                    href="/auth/welcome" 
-                    className="btn btn-primary btn-sm rounded-lg shadow-sm"
-                  >
-                    تسجيل الدخول
-                  </Link>
-                )
+  <button
+    onClick={handleGuestLogin}
+    className="btn btn-primary btn-sm rounded-lg shadow-sm"
+  >
+    تسجيل الدخول
+  </button>
+)
               )}
             </div>
 
@@ -324,14 +333,13 @@ export default function Navbar() {
                   </button>
                 </div>
               ) : (
-                <Link 
-                  href="/auth/welcome" 
-                  onClick={() => setIsOpen(false)}
-                  className="btn btn-primary w-full rounded-lg shadow-sm"
-                >
-                  تسجيل الدخول
-                </Link>
-              )
+  <button
+    onClick={handleGuestLogin}
+    className="btn btn-primary w-full rounded-lg shadow-sm"
+  >
+    تسجيل الدخول
+  </button>
+)
             )}
           </div>
         </div>
