@@ -96,10 +96,10 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
           type="text"
           placeholder="ابحث..."
           value={filter}
-          className="input input-bordered w-full max-w-md mx-3"
+          className="input input-ghost bg-base-200 text-base-content shadow-lg w-full max-w-md mx-3 focus:outline-none focus:ring-3 focus:ring-indigo-500/20 border-transparent focus:border-transparent transition-all duration-300"
           onChange={(e) => setFilter(e.target.value)}
         />
-        <button className="btn btn-error w-1/5 text-base-content"
+        <button className="btn btn-error w-1/5 shadow-xl text-base-content"
         onClick={()=>setFilter("")}
         >اعادة التعيين</button>
       </div>

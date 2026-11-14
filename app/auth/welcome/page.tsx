@@ -64,13 +64,13 @@ export default function Welcome() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 w-full" dir="rtl">
-      <div className="w-full max-w-3xl bg-white p-8 rounded-2xl shadow-md space-y-6 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center p-4 w-full" dir="rtl" style={{ backgroundImage: `url('/bg.jpg')` }}>
+      <div className="w-full max-w-3xl bg-white p-8 rounded-2xl shadow-xl space-y-6 text-center">
         
         {/* Title and description */}
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-gray-900">مرحباً بك</h1>
-          <p className="text-sm text-gray-500">اختر طريقة للمتابعة للوصول إلى التطبيق</p>
+          <p className="text-sm text-gray-500">اختر طريقة للمتابعة</p>
         </div>
 
         {/* Button list */}
@@ -79,7 +79,7 @@ export default function Welcome() {
           {/* Login button */}
           <Link 
             href="/auth/login"
-            className="w-full flex items-center justify-center py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm cursor-pointer text-base"
+            className="w-full flex items-center justify-center py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm cursor-pointer text-base shadow-xl hover:shadow-sm"
           >
             تسجيل الدخول
           </Link>
@@ -87,7 +87,7 @@ export default function Welcome() {
           {/* Create account button */}
           <Link 
             href="/auth/register"
-            className="w-full flex items-center justify-center py-3 px-4 border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium rounded-xl transition-colors cursor-pointer text-base"
+            className="w-full flex items-center justify-center py-3 px-4 border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium rounded-xl transition-colors cursor-pointer text-base shadow-md hover:shadow-sm"
           >
             إنشاء حساب جديد
           </Link>
@@ -102,7 +102,7 @@ export default function Welcome() {
             type="button"
             onClick={handleGuestLogin}
             disabled={guestLoading}
-            className="w-full flex items-center justify-center py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl disabled:opacity-50 transition-colors cursor-pointer text-base"
+            className="w-full flex items-center justify-center py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl disabled:opacity-50 transition-colors cursor-pointer text-base shadow-xl hover:shadow-lg"
           >
             {guestLoading ? (
               <span className="flex items-center gap-2">

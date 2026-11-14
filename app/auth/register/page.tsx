@@ -104,10 +104,10 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4" dir="rtl">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 w-full p-4" dir="rtl">
       <form 
         onSubmit={handleRegister} 
-        className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md space-y-4 relative"
+        className="w-full max-w-md bg-white p-6 rounded-xl shadow-md space-y-4 relative"
       >
         <div className="flex items-center justify-between pb-2 border-b border-gray-100">
           <Link
