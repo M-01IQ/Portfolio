@@ -38,7 +38,7 @@
 1. **Clone & Install:**
    ```bash
    git clone https://github.com/M-01IQ/Portfolio.git
-   cd your-repo-name
+   cd Portfolio
    npm install
 
   Environment Variables:
