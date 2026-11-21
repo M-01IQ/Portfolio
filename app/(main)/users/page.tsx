@@ -18,6 +18,7 @@ export default function UserSupa() {
   const [editingId, setEditingId] = useState<any>(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
   
   const { showToast } = useToast();
   const { askConfirm } = useConfirm();
@@ -69,6 +70,14 @@ export default function UserSupa() {
     fetchUsers()
   }, [fetchCurrentUserRole, fetchUsers])
 
+  const filteredUsers = useMemo(()=>{
+    const term = searchTerm.trim().toLowerCase()
+    if(!term) return users
+
+    return users.filter((item)=>(item.user_name || "").toLowerCase().includes(term) ||
+  (item.email || "").toLowerCase().includes(term)
+  )
+  },[users, searchTerm])
   const handleUpdate = async () => {
     const { error } = await supabase
       .from("profiles")
@@ -243,10 +252,26 @@ export default function UserSupa() {
           </div>
         </div>
       )}
-      
+    {/* Search Filter Input */}
+<div className="mb-2 flex items-center w-full">
+  <input
+    type="text"
+    placeholder="ابحث بالاسم أو البريد الإلكتروني..."
+    value={searchTerm}
+    className="input input-ghost bg-base-200 text-base-content shadow-lg w-full max-w-full mx-3 focus:outline-none focus:ring-3 focus:ring-indigo-500/20 border-transparent focus:border-transparent transition-all duration-300"
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+  <button
+    type="button"
+    className="btn btn-error w-1/5 shadow-xl text-base-content"
+    onClick={() => setSearchTerm("")}
+  >
+    اعادة التعيين
+  </button>
+</div>
       {/* User display */}
       <div className="flex flex-col gap-3 w-full max-w-3xl">
-        {users.map((item: any) => (
+        {filteredUsers.map((item: any) => (
           <div 
             key={item.id} 
             className="w-full bg-base-100 rounded-xl border border-base-300 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
