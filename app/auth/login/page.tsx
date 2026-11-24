@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/config/createClient';
 import { useToast } from "@/components/ui/PopUp/ToastContext";
-
+import { Eye, EyeOff } from "lucide-react"
 export default function Login() {
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +46,6 @@ export default function Login() {
       console.error('Failed to log visit:', err);
     }
   };
-
   // Login handler
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,17 +129,27 @@ export default function Login() {
         </div>
 
         {/* Password field */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">كلمة المرور</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 text-gray-600 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
-            dir="ltr"
-          />
-        </div>
+<div>
+  <label className="block text-sm text-gray-600 mb-1">كلمة المرور</label>
+  <div className="relative">
+    <input
+      type={showPassword ? "text" : "password"}
+      required
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      className="block w-full p-2 pr-10 text-gray-600 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
+      dir="ltr"
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword((prev) => !prev)}
+      aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+      className="absolute inset-y-0 right-2 flex items-center p-1 text-gray-500 hover:text-gray-800 cursor-pointer"
+    >
+      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+    </button>
+  </div>
+</div>
 
         {/* Submit button */}
         <button

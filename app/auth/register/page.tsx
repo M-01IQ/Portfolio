@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/config/createClient';
-import { useToast } from "@/components/ui/PopUp/ToastContext";
+import { useToast } from '@/components/ui/PopUp/ToastContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
   const { showToast } = useToast();
@@ -12,11 +13,12 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const supabase = createClient();
 
-  // Helper function to log user visit
   const logVisit = async (userId: string) => {
     try {
       let sessionId = localStorage.getItem('visitor_session_id');
@@ -29,9 +31,9 @@ export default function Register() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userId,
+          userId,
           accountType: 'registered',
-          sessionId: sessionId,
+          sessionId,
           pagePath: window.location.pathname,
         }),
       });
@@ -44,23 +46,20 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
-    // Username verification
     if (!userName.trim()) {
-      showToast("يرجى إدخال اسم المستخدم", "error");
+      showToast('يرجى إدخال اسم المستخدم', 'error');
       setLoading(false);
       return;
     }
 
-    // Password verification 
-    if (password !== confirmPassword) {
-      showToast("يرجى تأكيد كلمة المرور، الكلمتان غير متطابقتين", "error");
+    if (password.length < 6) {
+      showToast('يجب أن تكون كلمة المرور 6 أحرف على الأقل', 'error');
       setLoading(false);
       return;
-    } 
+    }
 
-    // Password length check
-    if (password.length < 6) {
-      showToast("يجب أن تكون كلمة المرور 6 أحرف على الأقل", "error");
+    if (password !== confirmPassword) {
+      showToast('يرجى تأكيد كلمة المرور، الكلمتان غير متطابقتين', 'error');
       setLoading(false);
       return;
     }
@@ -68,7 +67,7 @@ export default function Register() {
     try {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
-        password: password,
+        password,
         options: {
           data: {
             user_name: userName.trim(),
@@ -77,36 +76,43 @@ export default function Register() {
       });
 
       if (error) {
-        showToast(error.message || "فشل في إنشاء الحساب", "error");
-        console.error("Supabase Register Error:", error);
-      } else {
-        if (data.user && data.session === null) {
-          showToast('تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتأكيد الحساب.', 'success');
-        } else {
-          // Log the visit before routing
-          if (data.user) {
-            await logVisit(data.user.id);
-          }
+        showToast(error.message || 'فشل في إنشاء الحساب', 'error');
+        console.error('Supabase Register Error:', error);
+        return;
+      }
 
-          showToast("تم إنشاء الحساب وتسجيل الدخول بنجاح", "success");
-          
-          setTimeout(() => {
-            router.push('/');
-            router.refresh();
-          }, 1000);
+      if (data.user && data.session === null) {
+        showToast(
+          'تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتأكيد الحساب.',
+          'success'
+        );
+      } else {
+        if (data.user) {
+          await logVisit(data.user.id);
         }
+
+        showToast('تم إنشاء الحساب وتسجيل الدخول بنجاح', 'success');
+
+        setTimeout(() => {
+          router.push('/');
+          router.refresh();
+        }, 1000);
       }
     } catch (err) {
-      showToast("حدث خطأ ما يرجى المحاولة لاحقاً", "error");
+      showToast('حدث خطأ ما يرجى المحاولة لاحقاً', 'error');
+      console.error('Database Register Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 w-full p-4" dir="rtl">
-      <form 
-        onSubmit={handleRegister} 
+    <div
+      className="min-h-screen flex items-center justify-center bg-gray-100 w-full p-4"
+      dir="rtl"
+    >
+      <form
+        onSubmit={handleRegister}
         className="w-full max-w-md bg-white p-6 rounded-xl shadow-md space-y-4 relative"
       >
         <div className="flex items-center justify-between pb-2 border-b border-gray-100">
@@ -115,21 +121,25 @@ export default function Register() {
             className="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1 text-sm"
             title="العودة للصفحة الرئيسية للمصادقة"
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              strokeWidth={2} 
-              stroke="currentColor" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
               className="w-5 h-5 transform rotate-180"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+              />
             </svg>
             <span>رجوع</span>
           </Link>
 
           <h1 className="text-xl font-bold text-gray-800">إنشاء حساب جديد</h1>
-          <div className="w-12"></div>
+          <div className="w-12" />
         </div>
 
         <div>
@@ -159,26 +169,38 @@ export default function Register() {
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">كلمة المرور</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
-            dir="ltr"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full p-2 pr-10 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
+              dir="ltr"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+              className="absolute inset-y-0 right-2 flex items-center p-1 text-gray-500 hover:text-gray-800 cursor-pointer"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </div>
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">تأكيد كلمة المرور</label>
-          <input
-            type="password"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
-            dir="ltr"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="block w-full p-2 pr-10 text-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left"
+              dir="ltr"
+            />
+          </div>
         </div>
 
         <button
