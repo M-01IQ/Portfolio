@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useState, useContext, useRef, ReactNode } from "react";
+import React, { createContext, useState, useContext, useRef, useEffect, ReactNode } from "react";
 
-// Data type selection 
-export type ToastType = "success" | "error";
+// Data type selection
+export type ToastType = "success" | "warning" | "error";
 
 interface ToastState {
   show: boolean;
@@ -15,7 +15,7 @@ interface ToastContextType {
   showToast: (msg: string, type?: ToastType) => void;
 }
 
-// Create Context with custom data type 
+// Create Context with custom data type
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 interface ToastProviderProps {
@@ -28,26 +28,65 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     msg: "",
     type: "success",
   });
-// Use the timer
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const showToast = (msg: string, type: ToastType = "success") => {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // دالة لإلغاء المؤقت
+  const clearTimer = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
+  };
 
-    setToast({ show: true, msg, type });
-
+  // دالة لبدء المؤقت
+  const startTimer = () => {
+    clearTimer();
     timerRef.current = setTimeout(() => {
       setToast((prev) => ({ ...prev, show: false }));
     }, 2000);
   };
 
+  useEffect(() => {
+    return () => clearTimer();
+  }, []);
+
+  const showToast = (msg: string, type: ToastType = "success") => {
+    setToast({ show: true, msg, type });
+    startTimer();
+  };
+
+  const stylesByType: Record<ToastType, { box: string; iconBg: string; icon: string }> = {
+    success: {
+      box: "bg-emerald-500/15 border-emerald-500/60 text-emerald-700 dark:text-emerald-300",
+      iconBg: "bg-emerald-500/25 text-emerald-700 dark:text-emerald-300",
+      icon: "✓",
+    },
+    warning: {
+      box: "bg-amber-500/15 border-amber-500/60 text-amber-700 dark:text-amber-300",
+      iconBg: "bg-amber-500/25 text-amber-700 dark:text-amber-300",
+      icon: "!",
+    },
+    error: {
+      box: "bg-red-500/15 border-red-500/60 text-red-700 dark:text-red-300",
+      iconBg: "bg-red-500/25 text-red-700 dark:text-red-300",
+      icon: "✕",
+    },
+  };
+
+  const currentStyle = stylesByType[toast.type];
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/*  Toast UI Design */} 
-      <div dir="rtl"
+
+      {/* Toast UI Design */}
+      <div
+        dir="rtl"
+        onMouseEnter={clearTimer}
+        onMouseLeave={() => {
+          if (toast.show) startTimer();
+        }}
         className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ease-in-out ${
           toast.show
             ? "opacity-100 translate-y-0"
@@ -55,22 +94,16 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         }`}
       >
         <div
-          className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border ${
-            toast.type === "success"
-              ? "bg-emerald-500/10 border-emerald-400/60 text-emerald-500"
-              : "bg-red-500/10 border-red-400/60 text-red-500"
-          }`}
+          className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border cursor-default ${currentStyle.box}`}
         >
-          {/* Icon */} 
+          {/* Icon */}
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-              toast.type === "success" ? "bg-emerald-500/30" : "bg-red-500/30"
-            }`}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${currentStyle.iconBg}`}
           >
-            {toast.type === "success" ? "✓" : "✕"}
+            {currentStyle.icon}
           </div>
 
-          {/* text */}
+          {/* Text */}
           <span className="text-sm font-semibold whitespace-nowrap">
             {toast.msg}
           </span>
@@ -80,7 +113,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   );
 };
 
-// Error checking 
+// Error checking
 export const useToast = (): ToastContextType => {
   const context = useContext(ToastContext);
   if (!context) {
