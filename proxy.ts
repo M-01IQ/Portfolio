@@ -112,7 +112,7 @@ export async function proxy(request: NextRequest) {
     '/notification',
     '/setting',
   ];
-  const adminRoutes = ['/users'];
+  const adminRoutes = ['/dashboard','/users'];
 
   const isAuthRoute = matchesRoute(pathname, authRoutes);
   const isProtectedRoute = matchesRoute(pathname, protectedRoutes);

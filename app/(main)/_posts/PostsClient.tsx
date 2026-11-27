@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import CardPost, { TableItem, CurrentUser } from "./CardPost";
 import PostFormModal from "./PostFormModal";
@@ -20,10 +20,12 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
 
   const [openCommentsPostId, setOpenCommentsPostId] = useState<string | number | null>(null);
 
-  // Synchronize internal state with incoming initialPosts prop updates
-  useEffect(() => {
+  // Synchronize local state when the server-provided list changes.
+  const [previousInitialPosts, setPreviousInitialPosts] = useState(initialPosts);
+  if (initialPosts !== previousInitialPosts) {
+    setPreviousInitialPosts(initialPosts);
     setPosts(initialPosts);
-  }, [initialPosts]);
+  }
 
   // Open modal in create mode
   const handleOpenAdd = () => {
