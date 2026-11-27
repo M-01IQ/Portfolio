@@ -1,20 +1,53 @@
 import React from 'react';
 
-const Loading = () => {
+const css = `
+  .ping {
+    --uib-size: 50px;
+    --uib-speed: 1s;
+    --uib-color: #3950cf;
+    position: relative;
+    height: var(--uib-size);
+    width: var(--uib-size);
+  }
+
+  .ping::before,
+  .ping::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    border-radius: 50%;
+    background-color: var(--uib-color);
+    animation: pulse7132 var(--uib-speed) linear infinite;
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  .ping::after {
+    animation-delay: calc(var(--uib-speed) / -2);
+  }
+
+  @keyframes pulse7132 {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+`;
+
+const Loader = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[200px] w-full gap-3 p-8">
-      {/* Container with subtle glow */}
-      <div className="relative flex items-center justify-center">
-        <div className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-pulse" />
-        <span className="loading loading-spinner loading-lg text-primary relative z-10"></span>
-      </div>
-      
-      {/* Loading Text */}
-      <p className="text-sm font-medium text-base-content/70 animate-pulse tracking-wide">
-        جاري التحميل...
-      </p>
-    </div>
+    <>
+      <style>{css}</style>
+      <div className="ping" />
+    </>
   );
 };
 
-export default Loading;
+export default Loader;

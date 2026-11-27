@@ -77,7 +77,6 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
     <div className="relative min-h-screen max-w-7xl mx-auto pt-4" dir="rtl">
       {/* Header */}
       <div className="flex justify-between items-center mb-6 px-3">
-        <h1 className="text-2xl font-bold">المنشورات</h1>
       </div>
 
       {/* Floating Action Button strictly for admin users */}
@@ -101,9 +100,9 @@ export default function PostsClient({ initialPosts, currentUser, onRevalidate }:
           className="input input-ghost bg-base-200 text-base-content shadow-lg w-full max-w-md mx-3 focus:outline-none focus:ring-3 focus:ring-indigo-500/20 border-transparent focus:border-transparent transition-all duration-300"
           onChange={(e) => setFilter(e.target.value)}
         />
-        <button className="btn btn-error w-1/5 shadow-xl text-base-content"
+        <button className="btn btn-error  shadow-lg text-base-content"
         onClick={()=>setFilter("")}
-        >اعادة التعيين</button>
+        >X</button>
       </div>
 
       {/* Empty State View */}

@@ -91,7 +91,7 @@ export default function Navbar() {
   // List of all navigation links with admin restriction flags
   const allNavLinks = [
     { name: "الصفحة الرئيسية", href: "/", adminOnly: false },
-    { name: "لوحة التحكم", href: "/dashboard", adminOnly: false },
+    { name: "لوحة التحكم", href: "/dashboard", adminOnly: true },
     { name: "الخريطة التفاعلية", href: "/InteractiveMap", adminOnly: false },
     { name: "الملف الشخصي", href: "/profile", adminOnly: false },
     { name: "المستخدمون", href: "/users", adminOnly: true },
